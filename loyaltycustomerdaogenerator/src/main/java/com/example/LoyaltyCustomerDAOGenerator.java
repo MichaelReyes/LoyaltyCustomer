@@ -10,17 +10,18 @@ public class LoyaltyCustomerDAOGenerator {
         Schema schema = new Schema(1, "ph.com.gs3.loyaltycustomer.models.sqlite.dao");
 
         Entity transaction = schema.addEntity("Transaction");
-        transaction.addIdProperty();
-        transaction.addIntProperty("store_id");
-        transaction.addStringProperty("customer_id");
+        transaction.addIdProperty().autoincrement();
+        transaction.addLongProperty("store_sales_id");
+        transaction.addLongProperty("store_id");
+        transaction.addLongProperty("customer_id");
         transaction.addFloatProperty("amount");
         transaction.addFloatProperty("total_discount");
         transaction.addDateProperty("transaction_date");
 
         Entity transationProduct = schema.addEntity("TransactionProduct");
-        transationProduct.addIdProperty();
-        transationProduct.addIntProperty("sales_id");
-        transationProduct.addIntProperty("product_id");
+        transationProduct.addIdProperty().autoincrement();
+        transationProduct.addLongProperty("sales_id");
+        transationProduct.addLongProperty("product_id");
         transationProduct.addStringProperty("product_name");
         transationProduct.addFloatProperty("unit_cost");
         transationProduct.addStringProperty("sku");

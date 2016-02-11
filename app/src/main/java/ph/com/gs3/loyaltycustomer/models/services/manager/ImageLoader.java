@@ -22,7 +22,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import ph.com.gs3.loyalty.R;
+import ph.com.gs3.loyaltycustomer.R;
 
 /**
  * Created by Michael Reyes on 10/29/2015.

@@ -1,5 +1,7 @@
 package ph.com.gs3.loyaltycustomer.models.protocols;
 
+import android.util.Log;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -16,6 +18,8 @@ public class AcquirePurchaseInfoProtocol implements AcquireDataProtocol {
     @Override
     public void acquire(DataInputStream dataInputStream, DataOutputStream dataOutputStream) throws IOException {
         jsonStringPurchaseInfo = dataInputStream.readUTF();
+
+        Log.d(TAG, jsonStringPurchaseInfo);
 
     }
 

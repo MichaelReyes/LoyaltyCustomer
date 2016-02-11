@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
@@ -19,7 +20,7 @@ public class TransactionViewFragment extends Fragment {
 
     public static final String TAG = TransactionViewFragment.class.getSimpleName();
 
-    private ListView lvHistory;
+    private ListView lvTransactions;
 
     private Activity mActivity;
 
@@ -39,7 +40,7 @@ public class TransactionViewFragment extends Fragment {
         try {
             transactionViewFragmentListener = (TransactionViewFragmentListener) activity;
         } catch (ClassCastException e) {
-            throw new RuntimeException(activity.getClass().getSimpleName() + " must implement HistoryViewFragmentListener");
+            throw new RuntimeException(activity.getClass().getSimpleName() + " must implement TransactionViewFragmentListener");
         }
 
     }
@@ -48,8 +49,14 @@ public class TransactionViewFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_transactions, container, false);
 
-        lvHistory = (ListView) rootView.findViewById(R.id.Transaction_lvTransaction);
-        lvHistory.setAdapter(transactionListAdapter);
+        lvTransactions = (ListView) rootView.findViewById(R.id.Transaction_lvTransaction);
+        lvTransactions.setAdapter(transactionListAdapter);
+        lvTransactions.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+        });
 
         Button bGoBack = (Button) rootView.findViewById(R.id.Transaction_bGoBack);
         bGoBack.setOnClickListener(new View.OnClickListener() {

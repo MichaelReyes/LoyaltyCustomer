@@ -12,7 +12,6 @@
         android:layout_weight="1" />
 
     <LinearLayout
-        android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -20,8 +19,8 @@
 
         <Button
             android:id="@+id/Transaction_bGoBack"
-            android:layout_width="75dp"
-            android:layout_height="75dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_margin="4dp"
             android:background="@drawable/btn_click_goback"
             android:gravity="center_horizontal" />

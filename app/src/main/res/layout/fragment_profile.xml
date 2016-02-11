@@ -67,7 +67,7 @@
         android:entries="@array/gender_array"
         android:prompt="@string/gender_prompt" />
 
-    <TextViews
+    <TextView
         android:id="@+id/profile_tvAddress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

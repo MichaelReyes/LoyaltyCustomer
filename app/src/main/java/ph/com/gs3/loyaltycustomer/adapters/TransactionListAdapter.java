@@ -1,16 +1,19 @@
 package ph.com.gs3.loyaltycustomer.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 import ph.com.gs3.loyaltycustomer.R;
-import ph.com.gs3.loyaltycustomer.models.values.Transaction;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Transaction;
 
 /**
  * Created by Michael Reyes on 10/27/2015.
@@ -18,22 +21,25 @@ import ph.com.gs3.loyaltycustomer.models.values.Transaction;
 public class TransactionListAdapter extends BaseAdapter {
 
     private Context context;
-    private List<Transaction> transactionList;
+    private List<Transaction> transactions;
+
+    private static final SimpleDateFormat formatter = new SimpleDateFormat(
+            "yyyy-MM-dd", Locale.ENGLISH);
 
 
-    public TransactionListAdapter(Context context, List<Transaction> transactionList) {
+    public TransactionListAdapter(Context context, List<Transaction> transactions) {
         this.context = context;
-        this.transactionList = transactionList;
+        this.transactions = transactions;
     }
 
     @Override
     public int getCount() {
-        return transactionList.size();
+        return transactions.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return transactionList.get(position);
+        return transactions.get(position);
     }
 
     @Override
@@ -44,7 +50,9 @@ public class TransactionListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View row = convertView;
-        historyViewHolder viewHolder;
+        transactionViewHolder viewHolder;
+
+        Log.d("TEST","WEAWEaweaw");
 
         Transaction transaction = (Transaction) getItem(position);
 
@@ -52,25 +60,28 @@ public class TransactionListAdapter extends BaseAdapter {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             row = inflater.inflate(R.layout.view_transactions, parent, false);
 
-            viewHolder = new historyViewHolder(row);
+            viewHolder = new transactionViewHolder(row);
             row.setTag(viewHolder);
         }
 
-        viewHolder = (historyViewHolder) row.getTag();
+        viewHolder = (transactionViewHolder) row.getTag();
 
-        viewHolder.tvTransactionDate.setText(transaction.getTransaction_date());
-        //viewHolder.tvStore.setText();
+        Log.d("TLISTADAPTER : " ,  formatter.format(transaction.getTransaction_date()));
 
-        return row  ;
+        viewHolder.tvTransactionDate.setText(formatter.format(transaction.getTransaction_date()));
+        viewHolder.tvStore.setText(Long.toString(transaction.getStore_id()));
+        viewHolder.tvAmount.setText(Float.toString(transaction.getAmount()));
+
+        return row;
     }
 
-    private static class historyViewHolder {
+    private static class transactionViewHolder {
 
         final TextView tvTransactionDate;
         final TextView tvStore;
         final TextView tvAmount;
 
-        public historyViewHolder(View view) {
+        public transactionViewHolder(View view) {
 
             tvTransactionDate = (TextView) view.findViewById(R.id.VT_tvTransactionDate);
             tvStore = (TextView) view.findViewById(R.id.VT_tvStore);
