@@ -29,11 +29,12 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
-        android:name=".LoyaltyCustomerApplication">
+        android:name=".LoyaltyCustomerApplication"        >
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -46,13 +47,24 @@
             android:name=".models.services.DiscoverPeersOnBackgroundService"
             android:enabled="true"></service>
 
+        <service
+            android:name=".models.services.DownloadUpdatesFromWebService"
+            android:enabled="true"></service>
+
         <activity
             android:name=".ProfileActivity"
+            android:screenOrientation="portrait"
             android:label="@string/title_activity_profile"></activity>
 
         <activity
             android:name=".TransactionActivity"
+            android:screenOrientation="portrait"
             android:label="@string/title_activity_transaction"></activity>
+
+        <activity
+            android:name=".RewardsActivity"
+            android:screenOrientation="portrait"
+            android:label="Rewards"></activity>
 
     </application>
 

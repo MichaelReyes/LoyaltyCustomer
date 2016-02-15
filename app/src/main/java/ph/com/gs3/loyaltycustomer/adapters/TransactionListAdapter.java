@@ -24,7 +24,7 @@ public class TransactionListAdapter extends BaseAdapter {
     private List<Transaction> transactions;
 
     private static final SimpleDateFormat formatter = new SimpleDateFormat(
-            "yyyy-MM-dd", Locale.ENGLISH);
+            "yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
 
 
     public TransactionListAdapter(Context context, List<Transaction> transactions) {

@@ -1,18 +1,37 @@
 package ph.com.gs3.loyaltycustomer.models.services;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
+import android.graphics.BitmapFactory;
+import android.media.RingtoneManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
+
+import ph.com.gs3.loyaltycustomer.LoyaltyCustomerApplication;
+import ph.com.gs3.loyaltycustomer.MainActivity;
+import ph.com.gs3.loyaltycustomer.R;
+import ph.com.gs3.loyaltycustomer.models.Customer;
+import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Store;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.StoreDao;
 
 /**
  * Created by GS3-MREYES on 10/13/2015.
  */
-public class DiscoverPeersOnBackgroundService extends Service {
+public class DiscoverPeersOnBackgroundService extends Service implements Observer {
 
     public static final String TAG = DiscoverPeersOnBackgroundService.class.getSimpleName();
     public static final String NAME = DiscoverPeersOnBackgroundService.class.getName();
@@ -25,15 +44,25 @@ public class DiscoverPeersOnBackgroundService extends Service {
 
     private Context context = this;
 
+    private Customer currentCustomer;
+
+    private StoreDao storeDao;
+    private List<Store> stores;
+
     @Override
     public void onCreate() {
         super.onCreate();
+
     }
+
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         Log.d(TAG, "Discover peers on background.");
+
+        storeDao = LoyaltyCustomerApplication.getInstance().getSession().getStoreDao();
 
         wifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         channel = wifiP2pManager.initialize(context, context.getMainLooper(), null);
@@ -53,6 +82,95 @@ public class DiscoverPeersOnBackgroundService extends Service {
         }
         return START_NOT_STICKY;
         */
+    }
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void update(Observable observable, Object data) {
+
+        WifiDirectConnectivityState connectivityState = (WifiDirectConnectivityState) observable;
+
+
+        Log.d(TAG, "Detected change in the WifiDirectConnectivityState instance");
+
+        // always update the devices regardless of object update
+        // TODO: change this ^ implementation
+
+        // filter the devices
+        List<WifiP2pDevice> readableDevices = new ArrayList<>();
+        for (WifiP2pDevice device : connectivityState.getDeviceList()) {
+
+            readableDevices.add(device);
+        }
+
+    }
+
+    private void searchForStoreDevices(List<WifiP2pDevice> wifiP2pDevices){
+
+
+        for(WifiP2pDevice wifiP2pDevice : wifiP2pDevices){
+            if(isMacAddressOfBranch(wifiP2pDevice)){
+
+                showNotification(wifiP2pDevice.deviceName);
+
+            }
+        }
+
+
+    }
+
+    private boolean isMacAddressOfBranch(WifiP2pDevice wifiP2pDevice){
+
+        boolean found = false;
+
+        stores = storeDao.queryRaw(
+                "WHERE " + StoreDao.Properties.Mac_address.columnName + "=?",
+                new String[]{wifiP2pDevice.deviceAddress}
+        );
+
+        for(Store store : stores){
+
+            found = true;
+
+        }
+
+        return found;
+    }
+
+    private void showNotification(String branchName) {
+        int icon = R.mipmap.icon_don_benitos;
+
+        int mNotificationId = 001;
+
+        Intent resultIntent = new Intent(this, MainActivity.class);
+
+        PendingIntent resultPendingIntent =
+                PendingIntent.getActivity(
+                        this,
+                        0,
+                        resultIntent,
+                        PendingIntent.FLAG_CANCEL_CURRENT
+                );
+
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
+                this);
+        Notification notification = mBuilder.setSmallIcon(icon).setTicker("Hello There!").setWhen(0)
+                .setAutoCancel(true)
+                .setContentTitle("Hello There!")
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(
+                        "You are near our " + branchName + " branch."))
+                .setContentIntent(resultPendingIntent)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.mipmap.icon_don_benitos))
+                .build();
+
+        NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(mNotificationId, notification);
     }
 
     private void writeState(int state) {
@@ -111,6 +229,7 @@ public class DiscoverPeersOnBackgroundService extends Service {
         @Override
         public void onSuccess() {
             Log.v(TAG, "Successfully discovered peers");
+
         }
 
         @Override

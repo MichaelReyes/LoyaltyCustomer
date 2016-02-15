@@ -2,10 +2,8 @@ package ph.com.gs3.loyaltycustomer;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import ph.com.gs3.loyaltycustomer.adapters.TransactionListAdapter;
@@ -72,31 +70,13 @@ public class TransactionActivity extends Activity implements
     @Override
     public void onViewReady() {
 
-        transactions = transactionDao.loadAll();
+        List<Transaction> transactionList = transactionDao.loadAll();
 
-        for(Transaction transaction : transactions){
+        for(Transaction transaction : transactionList){
 
-            Log.d(TAG,Float.toString(transaction.getAmount()));
+            transactions.add(transaction);
 
         }
-
-        Transaction transaction1 = new Transaction();
-        transaction1.setTransaction_date(new Date());
-        transaction1.setAmount((float) 200);
-        transaction1.setStore_id((long) 1);
-        transaction1.setStore_sales_id((long) 2);
-        transaction1.setTotal_discount((float) 0);
-
-        transactions.add(transaction1);
-
-        Transaction transaction2 = new Transaction();
-        transaction2.setTransaction_date(new Date());
-        transaction2.setAmount((float) 200);
-        transaction2.setStore_id((long) 1);
-        transaction2.setStore_sales_id((long) 2);
-        transaction2.setTotal_discount((float) 0);
-
-        transactions.add(transaction2);
 
         transactionListAdapter.notifyDataSetChanged();
 

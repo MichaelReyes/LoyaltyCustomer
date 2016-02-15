@@ -79,6 +79,7 @@ public class WifiDirectConnectivityDataPresenter implements
         context.unregisterReceiver(wifiDirectBroadcastReceiver);
     }
 
+
     public void discoverPeers() {
         wifiP2pManager.discoverPeers(channel, peerDiscoveryActionListener);
 
@@ -192,7 +193,6 @@ public class WifiDirectConnectivityDataPresenter implements
             Log.v(TAG, message);
         }
     };
-
 
 
     public interface WifiDirectConnectivityPresentationListener {

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/VR_tvReward"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="3dp"
+        android:layout_margin="3dp"
+        android:textColor="#ffffff"
+        android:text="[Reward Text Here]"
+        android:background="#96a8ae"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:padding="3dp"
+            android:text="Valid From : " />
+
+        <TextView
+            android:id="@+id/VR_tvValidFrom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:text="[Valid From Date Here]" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:padding="3dp"
+            android:text="Valid Until : " />
+
+        <TextView
+            android:id="@+id/VR_tvValidUntil"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:text="[Valid Until Date Here]" />
+
+
+    </LinearLayout>
+
+
+</LinearLayout>

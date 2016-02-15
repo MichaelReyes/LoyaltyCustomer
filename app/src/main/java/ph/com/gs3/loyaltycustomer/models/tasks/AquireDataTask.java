@@ -13,8 +13,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
+import ph.com.gs3.loyaltycustomer.models.protocols.AcquireAdvertisementProtocol;
 import ph.com.gs3.loyaltycustomer.models.protocols.AcquireDataProtocol;
 import ph.com.gs3.loyaltycustomer.models.protocols.AcquirePurchaseInfoProtocol;
+import ph.com.gs3.loyaltycustomer.models.values.Announcement;
 
 /**
  * Created by Ervinne Sodusta on 10/20/2015.
@@ -104,6 +106,13 @@ public class AquireDataTask extends AsyncTask<Void, Void, Void> {
                 AcquirePurchaseInfoProtocol acquirePurchaseInfoProtocol = (AcquirePurchaseInfoProtocol) protocol;
                 acquirePurchaseInfoListener.onInfoAcquired(acquirePurchaseInfoProtocol.getJsonStringPurchaseInfo());
 
+            } else if (protocol instanceof AcquireAdvertisementProtocol) {
+
+                AcquireAdvertisementProtocol acquireAdvertisementProtocol = (AcquireAdvertisementProtocol) protocol;
+                Announcement announcement = Announcement.getAnnouncementFromSharedPreference(context);
+                announcement.setCurrentAnnouncement(acquireAdvertisementProtocol.getAdvertisement());
+                announcement.save(context);
+
             }
 
         }
@@ -123,6 +132,8 @@ public class AquireDataTask extends AsyncTask<Void, Void, Void> {
 
         if (DATA_TYPE_PURCHASE_INFO.equals(dataType)) {
             protocol = new AcquirePurchaseInfoProtocol();
+        }else if (DATA_TYPE_ADVERTISEMENT.equals(dataType)) {
+            protocol = new AcquireAdvertisementProtocol();
         } else {
             Log.e(TAG, "Failed to determine data type: " + dataType);
         }

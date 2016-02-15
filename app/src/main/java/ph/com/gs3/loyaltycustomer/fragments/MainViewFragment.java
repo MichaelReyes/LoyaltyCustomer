@@ -48,6 +48,8 @@ public class MainViewFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+        setAnnouncements(rootView);
+
         tvViewPromo = (TextView) rootView.findViewById(R.id.Main_tvViewPromo);
         tvViewPromo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -87,6 +89,12 @@ public class MainViewFragment extends Fragment {
         return rootView;
     }
 
+    private void setAnnouncements(View rootView){
+
+        tvAnnouncements = (TextView) rootView.findViewById(R.id.Main_tvAnnouncements);
+        mainViewFragmentEventListener.onSetAnnouncement(tvAnnouncements);
+    }
+
 
 
     public interface MainViewFragmentEventListener {
@@ -100,6 +108,8 @@ public class MainViewFragment extends Fragment {
         void onCheckHistory();
 
         void onViewPromo();
+
+        void onSetAnnouncement(TextView tvAnnouncements);
 
     }
 

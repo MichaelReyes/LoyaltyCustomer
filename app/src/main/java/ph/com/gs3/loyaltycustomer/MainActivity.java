@@ -5,11 +5,18 @@ import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.Display;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
+import android.widget.HorizontalScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -18,22 +25,28 @@ import org.json.JSONObject;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import ph.com.gs3.loyaltycustomer.fragments.MainViewFragment;
 import ph.com.gs3.loyaltycustomer.models.Customer;
+import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.services.DiscoverPeersOnBackgroundService;
+import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebService;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Store;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Transaction;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionProduct;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionProductDao;
 import ph.com.gs3.loyaltycustomer.models.tasks.AcquirePurchaseInfoTask;
+import ph.com.gs3.loyaltycustomer.models.values.Announcement;
 import ph.com.gs3.loyaltycustomer.presenters.WifiDirectConnectivityDataPresenter;
 
 
 public class MainActivity extends Activity implements MainViewFragment.MainViewFragmentEventListener,
         WifiDirectConnectivityDataPresenter.WifiDirectConnectivityPresentationListener,
-        AcquirePurchaseInfoTask.AcquirePurchaseInfoListener {
+        AcquirePurchaseInfoTask.AcquirePurchaseInfoListener,
+        Animation.AnimationListener{
 
     public static final String TAG = MainActivity.class.getSimpleName();
     public static final String DATA_TYPE_JSON_SALES = "sales";
@@ -46,10 +59,18 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     private boolean viewReady;
     private WifiDirectConnectivityDataPresenter wifiDirectConnectivityDataPresenter;
 
+    private TextView tvAnnouncements;
+    private int announcementCount = 0;
+    private Announcement announcement;
+    private String[] splittedAnnouncement;
+    private Animation animationTextFromRightToLeft;
+
     private Intent discoverPeersOnBackgroundIntent;
+    private Intent downloadUpdatesFromWebServiceIntent;
 
     private WifiManager wifiManager;
     private ProgressDialog progressDialog;
+
 
     private static final SimpleDateFormat formatter = new SimpleDateFormat(
             "EEE MMM d HH:mm:ss zzz yyyy");
@@ -59,6 +80,13 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         setContentView(R.layout.activity_main);
 
         currentCustomer = Customer.getDeviceRetailerFromSharedPreferences(this);
+        announcement = Announcement.getAnnouncementFromSharedPreference(this);
+
+        if ( announcement.getCurrentAnnouncement().equals("") ) {
+            announcement.setCurrentAnnouncement("Welcome to Don Benito's Cassava Cake and Pichi-pichi.");
+        }
+
+        announcement.save(this);
 
         progressDialog = new ProgressDialog(this);
 
@@ -83,37 +111,6 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
     }
 
-    /*
-    private void showNotification() {
-        int icon = R.mipmap.icon_don_benitos;
-
-        int mNotificationId = 001;
-
-        Intent resultIntent = new Intent(this, MainActivity.class);
-
-        PendingIntent resultPendingIntent =
-                PendingIntent.getActivity(
-                        this,
-                        0,
-                        resultIntent,
-                        PendingIntent.FLAG_CANCEL_CURRENT
-                );
-
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
-                this);
-        Notification notification = mBuilder.setSmallIcon(icon).setTicker("Hello There!").setWhen(0)
-                .setAutoCancel(true)
-                .setContentTitle("Hello There!")
-                .setStyle(new NotificationCompat.BigTextStyle().bigText("You are near our Don Benito's Blumentritt branch. You can contact us on (02)123-45678. "))
-                .setContentIntent(resultPendingIntent)
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.mipmap.icon_don_benitos))
-                .build();
-
-        NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(mNotificationId, notification);
-    }
-    */
 
     private void startBackgroundService() {
 
@@ -126,12 +123,20 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
             Log.d(TAG, "DiscoverPeersOnBackgroundService SERVICE ALREADY RUNNING!");
         }
 
+        if ( !isServiceRunning(DownloadUpdatesFromWebService.class) ) {
+            this.startService(downloadUpdatesFromWebServiceIntent);
+
+        } else {
+            Log.d(TAG, "DownloadUpdatesFromWebService SERVICE ALREADY RUNNING!");
+        }
+
     }
 
 
     private void setServiceIntent() {
 
         discoverPeersOnBackgroundIntent = new Intent(this, DiscoverPeersOnBackgroundService.class);
+        downloadUpdatesFromWebServiceIntent = new Intent(this, DownloadUpdatesFromWebService.class);
 
     }
 
@@ -150,12 +155,12 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         super.onResume();
         wifiDirectConnectivityDataPresenter.onResume();
 
-        if (!wifiManager.isWifiEnabled()) {
+        /*if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
         } else {
             wifiManager.setWifiEnabled(false);
             wifiManager.setWifiEnabled(true);
-        }
+        }*/
 
     }
 
@@ -169,6 +174,14 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onViewReady() {
         viewReady = true;
+
+        Store store = new Store();
+        store.setDevice_id("26:00:ba:16:08:59");
+        store.setMac_address("26:00:ba:16:08:59");
+        store.setIs_active(1);
+        store.setName("Don Benitos Manila");
+        store.setCreated_at(new Date());
+        store.setUpdated_at(new Date());
 
     }
 
@@ -201,6 +214,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
         hideDialogAfter(7000);
 
+        wifiDirectConnectivityDataPresenter.discoverPeers();
 
     }
 
@@ -214,6 +228,79 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
                     }
                 },
                 hideAfterMillis);
+    }
+
+    @Override
+    public void onSetAnnouncement(TextView tvAnnouncements) {
+
+        this.tvAnnouncements = tvAnnouncements;
+        splittedAnnouncement = announcement.getCurrentAnnouncement().split(";");
+        this.tvAnnouncements.setText(splittedAnnouncement[0]);
+
+        this.tvAnnouncements.measure(0, 0);
+
+        int textSize = this.tvAnnouncements.getMeasuredWidth();
+        setAnimation(textSize);
+
+        this.tvAnnouncements.startAnimation(animationTextFromRightToLeft);
+        announcementCount++;
+    }
+
+    @Override
+    public void onAnimationStart(Animation animation) {
+        HorizontalScrollView horizontalScrollView = (HorizontalScrollView) findViewById(R.id.Main_hsvAnnouncement);
+        horizontalScrollView.scrollTo(0, 0);
+
+    }
+
+    @Override
+    public void onAnimationEnd(Animation animation) {
+
+
+        if ( announcementCount < splittedAnnouncement.length ) {
+            tvAnnouncements.setText(splittedAnnouncement[announcementCount]);
+        } else {
+            tvAnnouncements.setText(splittedAnnouncement[0]);
+            announcementCount = 0;
+        }
+
+        Announcement checkAnnouncement = Announcement.getAnnouncementFromSharedPreference(this);
+
+        if ( !checkAnnouncement.getCurrentAnnouncement().equals(announcement.getCurrentAnnouncement()) ) {
+            announcement.setCurrentAnnouncement(checkAnnouncement.getCurrentAnnouncement());
+            splittedAnnouncement = announcement.getCurrentAnnouncement().split(";");
+            tvAnnouncements.setText(splittedAnnouncement[0]);
+            announcementCount = 0;
+        }
+
+        announcementCount++;
+
+        tvAnnouncements.measure(0, 0);
+        int textSize = tvAnnouncements.getMeasuredWidth();
+        setAnimation(textSize);
+
+        tvAnnouncements.startAnimation(animationTextFromRightToLeft);
+
+    }
+
+    @Override
+    public void onAnimationRepeat(Animation animation) {
+
+    }
+
+    private void setAnimation(int textSize) {
+        Display display = this.getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int width = size.x;
+
+        animationTextFromRightToLeft = new TranslateAnimation(width, (textSize * -1), 0, 0);
+        animationTextFromRightToLeft.setDuration(15000);
+        animationTextFromRightToLeft.setRepeatMode(Animation.RESTART);
+        animationTextFromRightToLeft.setRepeatCount(Animation.ABSOLUTE);
+        animationTextFromRightToLeft.setAnimationListener(this);
+
+
     }
 
     @Override
@@ -231,7 +318,8 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onViewPromo() {
 
-
+        Intent intent= new Intent(this,RewardsActivity.class);
+        startActivity(intent);
     }
 
     @Override
@@ -252,6 +340,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onNewPeersDiscovered(List<WifiP2pDevice> wifiP2pDevices) {
 
+
     }
 
     private void getDeviceMobileNumber() {
@@ -266,9 +355,8 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onInfoAcquired(String jsonStringPurchaseInfo) {
 
+
         if (!jsonStringPurchaseInfo.equals("")) {
-
-
             TransactionDao transactionDao =
                     LoyaltyCustomerApplication.getInstance().getSession().getTransactionDao();
             TransactionProductDao transactionProductDao =
@@ -317,5 +405,22 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
         }
 
+        if ( !WifiDirectConnectivityState.getInstance().isServer() ) {
+
+            wifiDirectConnectivityDataPresenter.disconnect(new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Log.d(TAG, "Disconnected.");
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    Log.d(TAG, "Failed to disconnect.");
+                }
+            });
+        }
+
     }
+
+
 }

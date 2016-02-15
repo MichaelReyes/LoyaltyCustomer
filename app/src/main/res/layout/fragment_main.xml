@@ -2,7 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#ffffff">
 
     <HorizontalScrollView
         android:id="@+id/Main_hsvAnnouncement"
@@ -53,9 +54,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:textColor="#686868"
             android:text="Enjoy freebies using our mobile App"/>
-
-
 
     </LinearLayout>
 
