@@ -52,15 +52,13 @@ public class DiscoverPeersOnBackgroundService extends Service implements Observe
     @Override
     public void onCreate() {
         super.onCreate();
-
+        WifiDirectConnectivityState.getInstance().addObserver(this);
     }
 
 
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        Log.d(TAG, "Discover peers on background.");
 
         storeDao = LoyaltyCustomerApplication.getInstance().getSession().getStoreDao();
 
@@ -108,6 +106,8 @@ public class DiscoverPeersOnBackgroundService extends Service implements Observe
             readableDevices.add(device);
         }
 
+        searchForStoreDevices(readableDevices);
+
     }
 
     private void searchForStoreDevices(List<WifiP2pDevice> wifiP2pDevices){
@@ -128,10 +128,7 @@ public class DiscoverPeersOnBackgroundService extends Service implements Observe
 
         boolean found = false;
 
-        stores = storeDao.queryRaw(
-                "WHERE " + StoreDao.Properties.Mac_address.columnName + "=?",
-                new String[]{wifiP2pDevice.deviceAddress}
-        );
+        stores = getStoresByMacAddress(wifiP2pDevice.deviceAddress);
 
         for(Store store : stores){
 
@@ -140,6 +137,15 @@ public class DiscoverPeersOnBackgroundService extends Service implements Observe
         }
 
         return found;
+    }
+
+    private List<Store> getStoresByMacAddress(String deviceAddress){
+
+        return storeDao.queryRaw(
+                "WHERE " + StoreDao.Properties.Mac_address.columnName + "=?",
+                new String[]{deviceAddress}
+        );
+
     }
 
     private void showNotification(String branchName) {

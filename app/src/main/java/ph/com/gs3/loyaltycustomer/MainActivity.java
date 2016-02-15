@@ -34,6 +34,7 @@ import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.services.DiscoverPeersOnBackgroundService;
 import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebService;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Store;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.StoreDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Transaction;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionProduct;
@@ -71,6 +72,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     private WifiManager wifiManager;
     private ProgressDialog progressDialog;
 
+    private StoreDao storeDao;
 
     private static final SimpleDateFormat formatter = new SimpleDateFormat(
             "EEE MMM d HH:mm:ss zzz yyyy");
@@ -107,7 +109,8 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
         getDeviceMobileNumber();
         startBackgroundService();
-        //showNotification();
+
+        storeDao = LoyaltyCustomerApplication.getInstance().getSession().getStoreDao();
 
     }
 
@@ -182,6 +185,8 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         store.setName("Don Benitos Manila");
         store.setCreated_at(new Date());
         store.setUpdated_at(new Date());
+
+        storeDao.insert(store);
 
     }
 

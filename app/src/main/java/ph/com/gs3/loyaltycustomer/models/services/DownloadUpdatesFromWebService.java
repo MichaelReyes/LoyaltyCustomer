@@ -7,14 +7,13 @@ import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.List;
 
 import ph.com.gs3.loyaltycustomer.LoyaltyCustomerApplication;
 import ph.com.gs3.loyaltycustomer.globals.Constants;
+import ph.com.gs3.loyaltycustomer.models.api.HttpCommunicator;
 import ph.com.gs3.loyaltycustomer.models.services.manager.ImageLoader;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.PromoImages;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.PromoImagesDao;
@@ -22,7 +21,6 @@ import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Reward;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.RewardDao;
 import retrofit.Call;
 import retrofit.Callback;
-import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 import retrofit.http.GET;
@@ -50,6 +48,10 @@ public class DownloadUpdatesFromWebService extends Service {
     private PromoImages promoImages;
     private PromoImagesDao promoImagesDao;
 
+    private HttpCommunicator httpCommunicator;
+    private Retrofit retrofit;
+    private DownloadUpdatesAPI downloadUpdatesAPI;
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -58,6 +60,7 @@ public class DownloadUpdatesFromWebService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
     }
 
     @Override
@@ -75,6 +78,8 @@ public class DownloadUpdatesFromWebService extends Service {
         promoImagesDao = LoyaltyCustomerApplication.getInstance().getSession().getPromoImagesDao();
         rewardDao = LoyaltyCustomerApplication.getInstance().getSession().getRewardDao();
 
+        initializeApiCommunicator();
+
         Thread connectToServerThread = new Thread(new connectToServerThread());
         connectToServerThread.start();
 
@@ -87,6 +92,12 @@ public class DownloadUpdatesFromWebService extends Service {
             writeState(0);
         }
         return START_NOT_STICKY;
+    }
+
+    private void initializeApiCommunicator(){
+        httpCommunicator = new HttpCommunicator();
+        retrofit = httpCommunicator.getRetrofit();
+        downloadUpdatesAPI = retrofit.create(DownloadUpdatesAPI.class);
     }
 
     private void writeState(int state) {
@@ -111,17 +122,6 @@ public class DownloadUpdatesFromWebService extends Service {
 
                 try {
                     Log.d(TAG, "Download Updates From Web Service on background.");
-                    Gson gson = new GsonBuilder()
-                            .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-                            .create();
-
-                    Retrofit retrofit = new Retrofit.Builder()
-                            .baseUrl(SERVER_URL)
-                            .addConverterFactory(GsonConverterFactory.create(gson))
-                            .build();
-                    Log.d(TAG,"SERVER : " +SERVER_URL);
-
-                    DownloadUpdatesAPI downloadUpdatesAPI = retrofit.create(DownloadUpdatesAPI.class);
 
                     Call<PromoImages> promoLogoCall = downloadUpdatesAPI.getPromoLogo();
                     promoLogoCall.enqueue(new Callback<PromoImages>() {
