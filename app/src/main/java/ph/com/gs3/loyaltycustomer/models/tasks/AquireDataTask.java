@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import ph.com.gs3.loyaltycustomer.models.Customer;
 import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.protocols.AcquireAdvertisementProtocol;
 import ph.com.gs3.loyaltycustomer.models.protocols.AcquireDataProtocol;
@@ -32,11 +33,15 @@ public class AquireDataTask extends AsyncTask<Void, Void, Void> {
     private Context context;
     private AcquireDataProtocol protocol;
 
+    private Customer customer;
+
     private AcquirePurchaseInfoTask.AcquirePurchaseInfoListener acquirePurchaseInfoListener;
 
     public AquireDataTask(int port, Context context) {
         this.port = port;
         this.context = context;
+
+        customer = Customer.getDeviceRetailerFromSharedPreferences(context);
     }
 
     public void setAcquirePurchaseInfoListener(AcquirePurchaseInfoTask.AcquirePurchaseInfoListener acquirePurchaseInfoListener) {
@@ -72,6 +77,8 @@ public class AquireDataTask extends AsyncTask<Void, Void, Void> {
             if (!connectivityState.isServer()) {
                 sendClientReadyConfirmation(dataOutputStream);
             }
+
+            sendCustomerId(dataOutputStream);
 
             protocol = getProtocol(dataInputStream);
 
@@ -121,6 +128,13 @@ public class AquireDataTask extends AsyncTask<Void, Void, Void> {
     private void sendClientReadyConfirmation(DataOutputStream dataOutputStream) throws IOException {
 
         dataOutputStream.writeUTF("CLIENT_READY");
+        dataOutputStream.flush();
+
+    }
+
+    private void sendCustomerId(DataOutputStream dataOutputStream) throws IOException {
+
+        dataOutputStream.writeUTF(String.valueOf(customer.getCustomerId()));
         dataOutputStream.flush();
 
     }

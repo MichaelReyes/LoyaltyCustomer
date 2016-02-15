@@ -9,6 +9,7 @@ public class Transaction {
     private Long id;
     private Long store_sales_id;
     private Long store_id;
+    private String store_name;
     private Long customer_id;
     private Float amount;
     private Float total_discount;
@@ -21,10 +22,11 @@ public class Transaction {
         this.id = id;
     }
 
-    public Transaction(Long id, Long store_sales_id, Long store_id, Long customer_id, Float amount, Float total_discount, java.util.Date transaction_date) {
+    public Transaction(Long id, Long store_sales_id, Long store_id, String store_name, Long customer_id, Float amount, Float total_discount, java.util.Date transaction_date) {
         this.id = id;
         this.store_sales_id = store_sales_id;
         this.store_id = store_id;
+        this.store_name = store_name;
         this.customer_id = customer_id;
         this.amount = amount;
         this.total_discount = total_discount;
@@ -53,6 +55,14 @@ public class Transaction {
 
     public void setStore_id(Long store_id) {
         this.store_id = store_id;
+    }
+
+    public String getStore_name() {
+        return store_name;
+    }
+
+    public void setStore_name(String store_name) {
+        this.store_name = store_name;
     }
 
     public Long getCustomer_id() {

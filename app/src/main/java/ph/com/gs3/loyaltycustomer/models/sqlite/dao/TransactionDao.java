@@ -26,10 +26,11 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property Store_sales_id = new Property(1, Long.class, "store_sales_id", false, "STORE_SALES_ID");
         public final static Property Store_id = new Property(2, Long.class, "store_id", false, "STORE_ID");
-        public final static Property Customer_id = new Property(3, Long.class, "customer_id", false, "CUSTOMER_ID");
-        public final static Property Amount = new Property(4, Float.class, "amount", false, "AMOUNT");
-        public final static Property Total_discount = new Property(5, Float.class, "total_discount", false, "TOTAL_DISCOUNT");
-        public final static Property Transaction_date = new Property(6, java.util.Date.class, "transaction_date", false, "TRANSACTION_DATE");
+        public final static Property Store_name = new Property(3, String.class, "store_name", false, "STORE_NAME");
+        public final static Property Customer_id = new Property(4, Long.class, "customer_id", false, "CUSTOMER_ID");
+        public final static Property Amount = new Property(5, Float.class, "amount", false, "AMOUNT");
+        public final static Property Total_discount = new Property(6, Float.class, "total_discount", false, "TOTAL_DISCOUNT");
+        public final static Property Transaction_date = new Property(7, java.util.Date.class, "transaction_date", false, "TRANSACTION_DATE");
     };
 
 
@@ -48,10 +49,11 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
                 "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "\"STORE_SALES_ID\" INTEGER," + // 1: store_sales_id
                 "\"STORE_ID\" INTEGER," + // 2: store_id
-                "\"CUSTOMER_ID\" INTEGER," + // 3: customer_id
-                "\"AMOUNT\" REAL," + // 4: amount
-                "\"TOTAL_DISCOUNT\" REAL," + // 5: total_discount
-                "\"TRANSACTION_DATE\" INTEGER);"); // 6: transaction_date
+                "\"STORE_NAME\" TEXT," + // 3: store_name
+                "\"CUSTOMER_ID\" INTEGER," + // 4: customer_id
+                "\"AMOUNT\" REAL," + // 5: amount
+                "\"TOTAL_DISCOUNT\" REAL," + // 6: total_discount
+                "\"TRANSACTION_DATE\" INTEGER);"); // 7: transaction_date
     }
 
     /** Drops the underlying database table. */
@@ -80,24 +82,29 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
             stmt.bindLong(3, store_id);
         }
  
+        String store_name = entity.getStore_name();
+        if (store_name != null) {
+            stmt.bindString(4, store_name);
+        }
+ 
         Long customer_id = entity.getCustomer_id();
         if (customer_id != null) {
-            stmt.bindLong(4, customer_id);
+            stmt.bindLong(5, customer_id);
         }
  
         Float amount = entity.getAmount();
         if (amount != null) {
-            stmt.bindDouble(5, amount);
+            stmt.bindDouble(6, amount);
         }
  
         Float total_discount = entity.getTotal_discount();
         if (total_discount != null) {
-            stmt.bindDouble(6, total_discount);
+            stmt.bindDouble(7, total_discount);
         }
  
         java.util.Date transaction_date = entity.getTransaction_date();
         if (transaction_date != null) {
-            stmt.bindLong(7, transaction_date.getTime());
+            stmt.bindLong(8, transaction_date.getTime());
         }
     }
 
@@ -114,10 +121,11 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1), // store_sales_id
             cursor.isNull(offset + 2) ? null : cursor.getLong(offset + 2), // store_id
-            cursor.isNull(offset + 3) ? null : cursor.getLong(offset + 3), // customer_id
-            cursor.isNull(offset + 4) ? null : cursor.getFloat(offset + 4), // amount
-            cursor.isNull(offset + 5) ? null : cursor.getFloat(offset + 5), // total_discount
-            cursor.isNull(offset + 6) ? null : new java.util.Date(cursor.getLong(offset + 6)) // transaction_date
+            cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // store_name
+            cursor.isNull(offset + 4) ? null : cursor.getLong(offset + 4), // customer_id
+            cursor.isNull(offset + 5) ? null : cursor.getFloat(offset + 5), // amount
+            cursor.isNull(offset + 6) ? null : cursor.getFloat(offset + 6), // total_discount
+            cursor.isNull(offset + 7) ? null : new java.util.Date(cursor.getLong(offset + 7)) // transaction_date
         );
         return entity;
     }
@@ -128,10 +136,11 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setStore_sales_id(cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1));
         entity.setStore_id(cursor.isNull(offset + 2) ? null : cursor.getLong(offset + 2));
-        entity.setCustomer_id(cursor.isNull(offset + 3) ? null : cursor.getLong(offset + 3));
-        entity.setAmount(cursor.isNull(offset + 4) ? null : cursor.getFloat(offset + 4));
-        entity.setTotal_discount(cursor.isNull(offset + 5) ? null : cursor.getFloat(offset + 5));
-        entity.setTransaction_date(cursor.isNull(offset + 6) ? null : new java.util.Date(cursor.getLong(offset + 6)));
+        entity.setStore_name(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
+        entity.setCustomer_id(cursor.isNull(offset + 4) ? null : cursor.getLong(offset + 4));
+        entity.setAmount(cursor.isNull(offset + 5) ? null : cursor.getFloat(offset + 5));
+        entity.setTotal_discount(cursor.isNull(offset + 6) ? null : cursor.getFloat(offset + 6));
+        entity.setTransaction_date(cursor.isNull(offset + 7) ? null : new java.util.Date(cursor.getLong(offset + 7)));
      }
     
     /** @inheritdoc */

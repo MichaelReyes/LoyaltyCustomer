@@ -9,6 +9,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -132,7 +135,17 @@ public class ProfileActivity extends Activity implements ProfileViewFragment.Pro
             registerUserCall.enqueue(new Callback<String>() {
                 @Override
                 public void onResponse(Response<String> response, Retrofit retrofit) {
-                    Log.d(TAG, "RESPONSE : " + response.body().toString());
+
+                    try {
+                        Log.d(TAG, "RESPONSE : " + response.body().toString());
+                        JSONObject jsonObject = new JSONObject(response.body().toString());
+                        currentCustomer.setCustomerId(jsonObject.getLong("id"));
+                        currentCustomer.save(ProfileActivity.this);
+
+                    } catch (JSONException | NullPointerException e) {
+                        e.printStackTrace();
+                    }
+
                 }
 
                 @Override

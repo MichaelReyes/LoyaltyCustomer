@@ -169,7 +169,7 @@ public class DiscoverPeersOnBackgroundService extends Service implements Observe
                 .setAutoCancel(true)
                 .setContentTitle("Hello There!")
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(
-                        "You are near our " + branchName + " branch."))
+                        "You are near " + branchName ))
                 .setContentIntent(resultPendingIntent)
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.mipmap.icon_don_benitos))

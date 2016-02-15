@@ -11,6 +11,7 @@ public class Customer {
 
     public static final String TAG = Customer.class.getSimpleName();
 
+    private long customerId;
     private String deviceId;
     private String displayName;
     private String profileMobileNumber;
@@ -26,6 +27,7 @@ public class Customer {
 
         SharedPreferences settings = context.getSharedPreferences(TAG, Context.MODE_PRIVATE);
 
+        customer.customerId = settings.getLong("CUSTOMER_ID", 0);
         customer.deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         customer.displayName = settings.getString("DISPLAY_NAME", "");
         customer.currentPoints = settings.getInt("CURRENT_POINTS", 0);
@@ -42,7 +44,7 @@ public class Customer {
 
     @Override
     public String toString() {
-        return displayName;
+        return customerId + " ~ " + displayName + " ~ " + deviceId;
     }
 
     public void save(Context context) {
@@ -50,6 +52,7 @@ public class Customer {
         SharedPreferences settings = context.getSharedPreferences(TAG, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = settings.edit();
 
+        editor.putLong("CUSTOMER_ID", customerId);
         editor.putString("DISPLAY_NAME", displayName);
         editor.putInt("CURRENT_POINTS", currentPoints);
 
@@ -139,5 +142,13 @@ public class Customer {
 
     public void setProfileMobileNumber(String profileMobileNumber) {
         this.profileMobileNumber = profileMobileNumber;
+    }
+
+    public long getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(long customerId) {
+        this.customerId = customerId;
     }
 }

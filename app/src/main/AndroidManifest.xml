@@ -54,6 +54,10 @@
             android:name=".models.services.DownloadUpdatesFromWebService"
             android:enabled="true"></service>
 
+        <service
+            android:name=".models.services.DownloadUpdatesFromWebIntentService"
+            android:enabled="true"></service>
+
         <activity
             android:name=".ProfileActivity"
             android:screenOrientation="portrait"

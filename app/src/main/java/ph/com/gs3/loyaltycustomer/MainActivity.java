@@ -32,6 +32,7 @@ import ph.com.gs3.loyaltycustomer.fragments.MainViewFragment;
 import ph.com.gs3.loyaltycustomer.models.Customer;
 import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.services.DiscoverPeersOnBackgroundService;
+import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebIntentService;
 import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebService;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Store;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.StoreDao;
@@ -135,11 +136,10 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
     }
 
-
     private void setServiceIntent() {
 
         discoverPeersOnBackgroundIntent = new Intent(this, DiscoverPeersOnBackgroundService.class);
-        downloadUpdatesFromWebServiceIntent = new Intent(this, DownloadUpdatesFromWebService.class);
+        downloadUpdatesFromWebServiceIntent = new Intent(this, DownloadUpdatesFromWebIntentService.class);
 
     }
 
@@ -157,6 +157,8 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     protected void onResume() {
         super.onResume();
         wifiDirectConnectivityDataPresenter.onResume();
+
+        Log.d(TAG,"CUSTOMER INFO : " + currentCustomer.toString());
 
         /*if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
@@ -397,6 +399,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
                 Transaction transaction = new Transaction();
                 transaction.setStore_sales_id(transactionJsonObject.getLong("id"));
                 transaction.setStore_id(transactionJsonObject.getLong("store_id"));
+                transaction.setStore_name(transactionJsonObject.getString("store_name"));
                 transaction.setAmount(Float.valueOf(transactionJsonObject.get("amount").toString()));
                 transaction.setTransaction_date(
                         formatter.parse(transactionJsonObject.get("transaction_date").toString())

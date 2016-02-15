@@ -1,10 +1,8 @@
 package ph.com.gs3.loyaltycustomer.models.services;
 
-import android.app.Service;
+import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.IBinder;
 import android.util.Log;
 
 import com.google.gson.JsonSyntaxException;
@@ -27,11 +25,11 @@ import retrofit.Retrofit;
 import retrofit.http.GET;
 
 /**
- * Created by Michael Reyes on 10/28/2015.
+ * Created by Bryan-PC on 15/02/2016.
  */
-public class DownloadUpdatesFromWebService extends Service {
+public class DownloadUpdatesFromWebIntentService extends IntentService {
 
-    public static final String TAG = DownloadUpdatesFromWebService.class.getSimpleName();
+    public static final String TAG = DownloadUpdatesFromWebIntentService.class.getSimpleName();
 
     private ImageLoader imageLoader;
 
@@ -55,19 +53,13 @@ public class DownloadUpdatesFromWebService extends Service {
 
     private Announcement announcement;
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
+
+    public DownloadUpdatesFromWebIntentService() {
+        super(DownloadUpdatesFromWebIntentService.class.getName());
     }
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    protected void onHandleIntent(Intent intent) {
 
         context = this;
 
@@ -89,18 +81,7 @@ public class DownloadUpdatesFromWebService extends Service {
         Thread connectToServerThread = new Thread(new connectToServerThread());
         connectToServerThread.start();
 
-        stopSelf();
 
-        //return START_STICKY;
-
-        /*if (getState() == 0) {
-            writeState(1);
-            stopSelf();
-        } else {
-            writeState(0);
-        }*/
-
-        return START_NOT_STICKY;
     }
 
     private void initializeApiCommunicator() {
@@ -109,18 +90,6 @@ public class DownloadUpdatesFromWebService extends Service {
         downloadUpdatesAPI = retrofit.create(DownloadUpdatesAPI.class);
     }
 
-    private void writeState(int state) {
-        SharedPreferences.Editor editor = getSharedPreferences("serviceStart", MODE_MULTI_PROCESS)
-                .edit();
-        editor.clear();
-        editor.putInt("normalStart", state);
-        editor.commit();
-    }
-
-    private int getState() {
-        return getApplicationContext().getSharedPreferences("serviceStart",
-                MODE_MULTI_PROCESS).getInt("normalStart", 1);
-    }
 
     private class connectToServerThread extends Thread {
 
@@ -162,8 +131,6 @@ public class DownloadUpdatesFromWebService extends Service {
                     }
                 });
 
-                Log.d(TAG, "dsadasda");
-
                 Call<List<Reward>> promoCall = downloadUpdatesAPI.getRewards();
                 promoCall.enqueue(new Callback<List<Reward>>() {
                     @Override
@@ -180,9 +147,7 @@ public class DownloadUpdatesFromWebService extends Service {
 
                                 for (int i = 0; i < rewards.size(); i++) {
                                     reward = rewards.get(i);
-
                                     rewardDao.insert(reward);
-
                                 }
                             }
 
@@ -215,5 +180,7 @@ public class DownloadUpdatesFromWebService extends Service {
 
 
     }
+
+
 
 }

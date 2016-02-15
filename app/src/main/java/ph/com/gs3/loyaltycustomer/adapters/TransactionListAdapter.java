@@ -1,7 +1,6 @@
 package ph.com.gs3.loyaltycustomer.adapters;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,8 +51,6 @@ public class TransactionListAdapter extends BaseAdapter {
         View row = convertView;
         transactionViewHolder viewHolder;
 
-        Log.d("TEST","WEAWEaweaw");
-
         Transaction transaction = (Transaction) getItem(position);
 
         if (row == null) {
@@ -66,10 +63,8 @@ public class TransactionListAdapter extends BaseAdapter {
 
         viewHolder = (transactionViewHolder) row.getTag();
 
-        Log.d("TLISTADAPTER : " ,  formatter.format(transaction.getTransaction_date()));
-
         viewHolder.tvTransactionDate.setText(formatter.format(transaction.getTransaction_date()));
-        viewHolder.tvStore.setText(Long.toString(transaction.getStore_id()));
+        viewHolder.tvStore.setText(transaction.getStore_name());
         viewHolder.tvAmount.setText(Float.toString(transaction.getAmount()));
 
         return row;

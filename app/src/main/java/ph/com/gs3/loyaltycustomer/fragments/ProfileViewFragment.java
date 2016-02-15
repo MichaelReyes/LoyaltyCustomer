@@ -4,10 +4,10 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -141,46 +141,60 @@ public class ProfileViewFragment extends Fragment {
         tvEmail =(TextView) rootView.findViewById(R.id.profile_tvEmail);
         etEmail = (EditText) rootView.findViewById(R.id.profile_etEmail);
 
-        Log.d(TAG, "Email : " + currentCustomer.getProfileEmail());
+        etEmail.setText(currentCustomer.getProfileEmail());
 
-        if(currentCustomer.getProfileEmail() != ""){
+        /*if(currentCustomer.getProfileEmail() != ""){
             setVisibility(tvEmail,etEmail,false);
-        }
+        }*/
 
         tvBirthDate =(TextView) rootView.findViewById(R.id.profile_tvBirthDate);
         etBirthDate = (EditText) rootView.findViewById(R.id.profile_etBirthDate);
 
-        Log.d(TAG, "Birth Date : " + currentCustomer.getProfileBirthDate());
+        etBirthDate.setText(currentCustomer.getProfileBirthDate());
 
-        if (currentCustomer.getProfileBirthDate() != "") {
+        /*if (currentCustomer.getProfileBirthDate() != "") {
             setVisibility(tvBirthDate, etBirthDate, false);
-        }
+        }*/
 
         tvGender =(TextView) rootView.findViewById(R.id.profile_tvGender);
         sGender = (Spinner) rootView.findViewById(R.id.profile_sGender);
 
-        Log.d(TAG, "Gender : " + currentCustomer.getProfileGender());
+        setSpinnerSelection(sGender,R.array.gender_array,currentCustomer.getProfileGender());
 
-        if(currentCustomer.getProfileGender() != ""){
+        /*if(currentCustomer.getProfileGender() != ""){
             tvGender.setVisibility(View.GONE);
             sGender.setVisibility(View.GONE);
-        }
+        }*/
 
         tvAddress =(TextView) rootView.findViewById(R.id.profile_tvAddress);
         sCity  = (Spinner) rootView.findViewById(R.id.profile_sCity);
 
-        Log.d(TAG, "Address : " + currentCustomer.getProfileAddress());
+        setSpinnerSelection(sCity,R.array.city_array,currentCustomer.getProfileAddress());
 
-        if(currentCustomer.getProfileAddress() != ""){
+        /*if(currentCustomer.getProfileAddress() != ""){
             tvAddress.setVisibility(View.GONE);
             sCity.setVisibility(View.GONE);
-        }
+        }*/
 
         etPassword = (EditText) rootView.findViewById(R.id.profile_etPassword);
         etPassword.setText(currentCustomer.getProfilePassword());
 
         bSave = (Button) rootView.findViewById(R.id.profile_bSave);
         bCancel = (Button) rootView.findViewById(R.id.profile_bCancel);
+    }
+
+    private void setSpinnerSelection(Spinner spinner,int textArrayResId,String compareValue){
+
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity,
+                textArrayResId,
+                android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        if (!compareValue.equals(null)) {
+            int spinnerPosition = adapter.getPosition(compareValue);
+            spinner.setSelection(spinnerPosition);
+        }
+
     }
 
     private void setVisibility(TextView textView, EditText editText, Boolean display){

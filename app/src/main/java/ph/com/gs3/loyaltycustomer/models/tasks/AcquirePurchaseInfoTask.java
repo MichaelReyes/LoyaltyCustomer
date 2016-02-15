@@ -98,6 +98,7 @@ public class AcquirePurchaseInfoTask extends AsyncTask<Void, Void, Void> {
 
     }
 
+
     private void awaitAmountAndPoints(DataInputStream dataInputStream) throws IOException {
 
         storeName = dataInputStream.readUTF();
