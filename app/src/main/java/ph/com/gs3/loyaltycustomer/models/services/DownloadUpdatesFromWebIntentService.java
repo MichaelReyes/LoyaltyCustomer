@@ -104,23 +104,26 @@ public class DownloadUpdatesFromWebIntentService extends IntentService {
                     @Override
                     public void onResponse(Response<PromoImages> response, Retrofit retrofit) {
 
+                        try {
+                            promoImages = response.body();
 
-                        promoImages = response.body();
+                            Log.d(TAG, "PROMO IMAGE RESPONSE BODY : " + promoImages.getImage_file());
 
-                        Log.d(TAG, "PROMO IMAGE RESPONSE BODY : " + promoImages.getImage_file());
+                            if (promoImages != null) {
 
-                        if (promoImages != null) {
+                                promoImagesDao.deleteAll();
 
-                            promoImagesDao.deleteAll();
+                                imageDirectory = promoImages.getImage_file();
+                                promoImagesDao.insert(promoImages);
 
-                            imageDirectory = promoImages.getImage_file();
-                            promoImagesDao.insert(promoImages);
+                                announcement.setCurrentAnnouncement(promoImages.getDescription());
+                                announcement.save(context);
 
-                            announcement.setCurrentAnnouncement(promoImages.getDescription());
-                            announcement.save(context);
+                            } else {
+                                Log.d(TAG, "No promo available.");
+                            }
+                        } catch (NullPointerException e) {
 
-                        } else {
-                            Log.d(TAG, "No promo available.");
                         }
 
                     }
@@ -136,24 +139,31 @@ public class DownloadUpdatesFromWebIntentService extends IntentService {
                     @Override
                     public void onResponse(Response<List<Reward>> response, Retrofit retrofit) {
 
-                        Log.d(TAG, "REWARDS RESPONSE BODY : " + response.body().toString());
+                        try {
 
-                        rewards = response.body();
+                            Log.d(TAG, "REWARDS RESPONSE BODY : " + response.body().toString());
 
-                        if (rewards != null) {
-                            if (!rewards.isEmpty()) {
+                            rewards = response.body();
 
-                                rewardDao.deleteAll();
+                            if (rewards != null) {
+                                if (!rewards.isEmpty()) {
 
-                                for (int i = 0; i < rewards.size(); i++) {
-                                    reward = rewards.get(i);
-                                    rewardDao.insert(reward);
+                                    rewardDao.deleteAll();
+
+                                    for (int i = 0; i < rewards.size(); i++) {
+                                        reward = rewards.get(i);
+                                        rewardDao.insert(reward);
+                                    }
                                 }
-                            }
 
-                        } else {
-                            Log.d(TAG, "No rewards available.");
+                            } else {
+                                Log.d(TAG, "No rewards available.");
+                            }
+                        } catch (NullPointerException e) {
+
                         }
+
+
                     }
 
                     @Override
@@ -180,7 +190,6 @@ public class DownloadUpdatesFromWebIntentService extends IntentService {
 
 
     }
-
 
 
 }

@@ -70,7 +70,9 @@ public class TransactionActivity extends Activity implements
     @Override
     public void onViewReady() {
 
-        List<Transaction> transactionList = transactionDao.loadAll();
+        List<Transaction> transactionList = transactionDao.queryBuilder().orderDesc(
+                TransactionDao.Properties.Transaction_date
+        ).list();
 
         for(Transaction transaction : transactionList){
 

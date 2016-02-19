@@ -7,7 +7,7 @@ package ph.com.gs3.loyaltycustomer.models.sqlite.dao;
 public class TransactionProduct {
 
     private Long id;
-    private Long sales_id;
+    private String sales_transaction_number;
     private Long product_id;
     private String product_name;
     private Float unit_cost;
@@ -23,9 +23,9 @@ public class TransactionProduct {
         this.id = id;
     }
 
-    public TransactionProduct(Long id, Long sales_id, Long product_id, String product_name, Float unit_cost, String sku, Integer quantity, Float sub_total, String sale_type) {
+    public TransactionProduct(Long id, String sales_transaction_number, Long product_id, String product_name, Float unit_cost, String sku, Integer quantity, Float sub_total, String sale_type) {
         this.id = id;
-        this.sales_id = sales_id;
+        this.sales_transaction_number = sales_transaction_number;
         this.product_id = product_id;
         this.product_name = product_name;
         this.unit_cost = unit_cost;
@@ -43,12 +43,12 @@ public class TransactionProduct {
         this.id = id;
     }
 
-    public Long getSales_id() {
-        return sales_id;
+    public String getSales_transaction_number() {
+        return sales_transaction_number;
     }
 
-    public void setSales_id(Long sales_id) {
-        this.sales_id = sales_id;
+    public void setSales_transaction_number(String sales_transaction_number) {
+        this.sales_transaction_number = sales_transaction_number;
     }
 
     public Long getProduct_id() {

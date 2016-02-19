@@ -11,7 +11,7 @@ public class LoyaltyCustomerDAOGenerator {
 
         Entity transaction = schema.addEntity("Transaction");
         transaction.addIdProperty().autoincrement();
-        transaction.addLongProperty("store_sales_id");
+        transaction.addStringProperty("transaction_number");
         transaction.addLongProperty("store_id");
         transaction.addStringProperty("store_name");
         transaction.addLongProperty("customer_id");
@@ -21,7 +21,7 @@ public class LoyaltyCustomerDAOGenerator {
 
         Entity transationProduct = schema.addEntity("TransactionProduct");
         transationProduct.addIdProperty().autoincrement();
-        transationProduct.addLongProperty("sales_id");
+        transationProduct.addStringProperty("sales_transaction_number");
         transationProduct.addLongProperty("product_id");
         transationProduct.addStringProperty("product_name");
         transationProduct.addFloatProperty("unit_cost");

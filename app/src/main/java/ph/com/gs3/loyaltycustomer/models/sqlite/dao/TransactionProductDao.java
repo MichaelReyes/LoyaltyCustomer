@@ -24,7 +24,7 @@ public class TransactionProductDao extends AbstractDao<TransactionProduct, Long>
     */
     public static class Properties {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
-        public final static Property Sales_id = new Property(1, Long.class, "sales_id", false, "SALES_ID");
+        public final static Property Sales_transaction_number = new Property(1, String.class, "sales_transaction_number", false, "SALES_TRANSACTION_NUMBER");
         public final static Property Product_id = new Property(2, Long.class, "product_id", false, "PRODUCT_ID");
         public final static Property Product_name = new Property(3, String.class, "product_name", false, "PRODUCT_NAME");
         public final static Property Unit_cost = new Property(4, Float.class, "unit_cost", false, "UNIT_COST");
@@ -48,7 +48,7 @@ public class TransactionProductDao extends AbstractDao<TransactionProduct, Long>
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"TRANSACTION_PRODUCT\" (" + //
                 "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
-                "\"SALES_ID\" INTEGER," + // 1: sales_id
+                "\"SALES_TRANSACTION_NUMBER\" TEXT," + // 1: sales_transaction_number
                 "\"PRODUCT_ID\" INTEGER," + // 2: product_id
                 "\"PRODUCT_NAME\" TEXT," + // 3: product_name
                 "\"UNIT_COST\" REAL," + // 4: unit_cost
@@ -74,9 +74,9 @@ public class TransactionProductDao extends AbstractDao<TransactionProduct, Long>
             stmt.bindLong(1, id);
         }
  
-        Long sales_id = entity.getSales_id();
-        if (sales_id != null) {
-            stmt.bindLong(2, sales_id);
+        String sales_transaction_number = entity.getSales_transaction_number();
+        if (sales_transaction_number != null) {
+            stmt.bindString(2, sales_transaction_number);
         }
  
         Long product_id = entity.getProduct_id();
@@ -126,7 +126,7 @@ public class TransactionProductDao extends AbstractDao<TransactionProduct, Long>
     public TransactionProduct readEntity(Cursor cursor, int offset) {
         TransactionProduct entity = new TransactionProduct( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
-            cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1), // sales_id
+            cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // sales_transaction_number
             cursor.isNull(offset + 2) ? null : cursor.getLong(offset + 2), // product_id
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // product_name
             cursor.isNull(offset + 4) ? null : cursor.getFloat(offset + 4), // unit_cost
@@ -142,7 +142,7 @@ public class TransactionProductDao extends AbstractDao<TransactionProduct, Long>
     @Override
     public void readEntity(Cursor cursor, TransactionProduct entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
-        entity.setSales_id(cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1));
+        entity.setSales_transaction_number(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
         entity.setProduct_id(cursor.isNull(offset + 2) ? null : cursor.getLong(offset + 2));
         entity.setProduct_name(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setUnit_cost(cursor.isNull(offset + 4) ? null : cursor.getFloat(offset + 4));

@@ -382,7 +382,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
                     transactionProductJsonObject = transactionProductsJsonArray.getJSONObject(i);
 
                     TransactionProduct transactionProduct = new TransactionProduct();
-                    transactionProduct.setSales_id(transactionProductJsonObject.getLong("sales_id"));
+                    transactionProduct.setSales_transaction_number(transactionProductJsonObject.getString("sales_transaction_number"));
                     transactionProduct.setProduct_id(transactionProductJsonObject.getLong("product_id"));
                     transactionProduct.setProduct_name(transactionProductJsonObject.getString("product_name"));
                     transactionProduct.setUnit_cost(Float.valueOf(transactionProductJsonObject.get("unit_cost").toString()));
@@ -397,7 +397,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
 
                 Transaction transaction = new Transaction();
-                transaction.setStore_sales_id(transactionJsonObject.getLong("id"));
+                transaction.setTransaction_number(transactionJsonObject.getString("transaction_number"));
                 transaction.setStore_id(transactionJsonObject.getLong("store_id"));
                 transaction.setStore_name(transactionJsonObject.getString("store_name"));
                 transaction.setAmount(Float.valueOf(transactionJsonObject.get("amount").toString()));

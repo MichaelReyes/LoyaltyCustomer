@@ -24,7 +24,7 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
     */
     public static class Properties {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
-        public final static Property Store_sales_id = new Property(1, Long.class, "store_sales_id", false, "STORE_SALES_ID");
+        public final static Property Transaction_number = new Property(1, String.class, "transaction_number", false, "TRANSACTION_NUMBER");
         public final static Property Store_id = new Property(2, Long.class, "store_id", false, "STORE_ID");
         public final static Property Store_name = new Property(3, String.class, "store_name", false, "STORE_NAME");
         public final static Property Customer_id = new Property(4, Long.class, "customer_id", false, "CUSTOMER_ID");
@@ -47,7 +47,7 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"TRANSACTION\" (" + //
                 "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
-                "\"STORE_SALES_ID\" INTEGER," + // 1: store_sales_id
+                "\"TRANSACTION_NUMBER\" TEXT," + // 1: transaction_number
                 "\"STORE_ID\" INTEGER," + // 2: store_id
                 "\"STORE_NAME\" TEXT," + // 3: store_name
                 "\"CUSTOMER_ID\" INTEGER," + // 4: customer_id
@@ -72,9 +72,9 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
             stmt.bindLong(1, id);
         }
  
-        Long store_sales_id = entity.getStore_sales_id();
-        if (store_sales_id != null) {
-            stmt.bindLong(2, store_sales_id);
+        String transaction_number = entity.getTransaction_number();
+        if (transaction_number != null) {
+            stmt.bindString(2, transaction_number);
         }
  
         Long store_id = entity.getStore_id();
@@ -119,7 +119,7 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
     public Transaction readEntity(Cursor cursor, int offset) {
         Transaction entity = new Transaction( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
-            cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1), // store_sales_id
+            cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // transaction_number
             cursor.isNull(offset + 2) ? null : cursor.getLong(offset + 2), // store_id
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // store_name
             cursor.isNull(offset + 4) ? null : cursor.getLong(offset + 4), // customer_id
@@ -134,7 +134,7 @@ public class TransactionDao extends AbstractDao<Transaction, Long> {
     @Override
     public void readEntity(Cursor cursor, Transaction entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
-        entity.setStore_sales_id(cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1));
+        entity.setTransaction_number(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
         entity.setStore_id(cursor.isNull(offset + 2) ? null : cursor.getLong(offset + 2));
         entity.setStore_name(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setCustomer_id(cursor.isNull(offset + 4) ? null : cursor.getLong(offset + 4));
