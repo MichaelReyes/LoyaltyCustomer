@@ -25,11 +25,7 @@ public class StoreDao extends AbstractDao<Store, Long> {
     public static class Properties {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property Device_id = new Property(1, String.class, "device_id", false, "DEVICE_ID");
-        public final static Property Mac_address = new Property(2, String.class, "mac_address", false, "MAC_ADDRESS");
-        public final static Property Name = new Property(3, String.class, "name", false, "NAME");
-        public final static Property Is_active = new Property(4, Integer.class, "is_active", false, "IS_ACTIVE");
-        public final static Property Created_at = new Property(5, java.util.Date.class, "created_at", false, "CREATED_AT");
-        public final static Property Updated_at = new Property(6, java.util.Date.class, "updated_at", false, "UPDATED_AT");
+        public final static Property Name = new Property(2, String.class, "name", false, "NAME");
     };
 
 
@@ -45,13 +41,9 @@ public class StoreDao extends AbstractDao<Store, Long> {
     public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"STORE\" (" + //
-                "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
+                "\"_id\" INTEGER PRIMARY KEY ," + // 0: id
                 "\"DEVICE_ID\" TEXT," + // 1: device_id
-                "\"MAC_ADDRESS\" TEXT," + // 2: mac_address
-                "\"NAME\" TEXT," + // 3: name
-                "\"IS_ACTIVE\" INTEGER," + // 4: is_active
-                "\"CREATED_AT\" INTEGER," + // 5: created_at
-                "\"UPDATED_AT\" INTEGER);"); // 6: updated_at
+                "\"NAME\" TEXT);"); // 2: name
     }
 
     /** Drops the underlying database table. */
@@ -75,29 +67,9 @@ public class StoreDao extends AbstractDao<Store, Long> {
             stmt.bindString(2, device_id);
         }
  
-        String mac_address = entity.getMac_address();
-        if (mac_address != null) {
-            stmt.bindString(3, mac_address);
-        }
- 
         String name = entity.getName();
         if (name != null) {
-            stmt.bindString(4, name);
-        }
- 
-        Integer is_active = entity.getIs_active();
-        if (is_active != null) {
-            stmt.bindLong(5, is_active);
-        }
- 
-        java.util.Date created_at = entity.getCreated_at();
-        if (created_at != null) {
-            stmt.bindLong(6, created_at.getTime());
-        }
- 
-        java.util.Date updated_at = entity.getUpdated_at();
-        if (updated_at != null) {
-            stmt.bindLong(7, updated_at.getTime());
+            stmt.bindString(3, name);
         }
     }
 
@@ -113,11 +85,7 @@ public class StoreDao extends AbstractDao<Store, Long> {
         Store entity = new Store( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // device_id
-            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // mac_address
-            cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // name
-            cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4), // is_active
-            cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)), // created_at
-            cursor.isNull(offset + 6) ? null : new java.util.Date(cursor.getLong(offset + 6)) // updated_at
+            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2) // name
         );
         return entity;
     }
@@ -127,11 +95,7 @@ public class StoreDao extends AbstractDao<Store, Long> {
     public void readEntity(Cursor cursor, Store entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setDevice_id(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
-        entity.setMac_address(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
-        entity.setName(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
-        entity.setIs_active(cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4));
-        entity.setCreated_at(cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)));
-        entity.setUpdated_at(cursor.isNull(offset + 6) ? null : new java.util.Date(cursor.getLong(offset + 6)));
+        entity.setName(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
      }
     
     /** @inheritdoc */

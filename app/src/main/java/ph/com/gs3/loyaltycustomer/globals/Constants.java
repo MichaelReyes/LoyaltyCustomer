@@ -5,7 +5,7 @@ package ph.com.gs3.loyaltycustomer.globals;
  */
 public class Constants {
 
-    public static final String SERVER_ADDRESS = "http://192.168.0.130";
+    public static final String SERVER_ADDRESS = "http://192.168.0.132:85";
     public static final int COMPANY_ID = 1;
     public static final int SERVICE_PORT_NUMBER = 3001;
 

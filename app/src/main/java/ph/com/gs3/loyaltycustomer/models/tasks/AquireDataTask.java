@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,12 +13,16 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 
+import ph.com.gs3.loyaltycustomer.LoyaltyCustomerApplication;
 import ph.com.gs3.loyaltycustomer.models.Customer;
 import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.protocols.AcquireAdvertisementProtocol;
 import ph.com.gs3.loyaltycustomer.models.protocols.AcquireDataProtocol;
 import ph.com.gs3.loyaltycustomer.models.protocols.AcquirePurchaseInfoProtocol;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Transaction;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionDao;
 import ph.com.gs3.loyaltycustomer.models.values.Announcement;
 
 /**
@@ -79,6 +85,7 @@ public class AquireDataTask extends AsyncTask<Void, Void, Void> {
             }
 
             sendCustomerId(dataOutputStream);
+            sendTransaction(dataOutputStream);
 
             protocol = getProtocol(dataInputStream);
 
@@ -135,6 +142,19 @@ public class AquireDataTask extends AsyncTask<Void, Void, Void> {
     private void sendCustomerId(DataOutputStream dataOutputStream) throws IOException {
 
         dataOutputStream.writeUTF(String.valueOf(customer.getCustomerId()));
+        dataOutputStream.flush();
+
+    }
+
+    private void sendTransaction(DataOutputStream dataOutputStream) throws  IOException {
+
+        TransactionDao transactionDao = LoyaltyCustomerApplication.getSession().getTransactionDao();
+        List<Transaction> transactions = transactionDao.loadAll();
+        Gson gson = new Gson();
+        String json = gson.toJson(transactions);
+
+        dataOutputStream.writeUTF("TRANSACTIONS");
+        dataOutputStream.writeUTF(json);
         dataOutputStream.flush();
 
     }

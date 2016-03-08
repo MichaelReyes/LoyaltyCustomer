@@ -46,7 +46,7 @@
             android:layout_marginTop="150dp"
             android:layout_height="150dp"
             android:layout_alignParentTop="true"
-            android:src="@drawable/logo_bagnetified_1"
+            android:src="@drawable/don_benitos"
             />
 
         <TextView

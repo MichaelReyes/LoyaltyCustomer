@@ -25,7 +25,6 @@ import org.json.JSONObject;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import ph.com.gs3.loyaltycustomer.fragments.MainViewFragment;
@@ -34,7 +33,6 @@ import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.services.DiscoverPeersOnBackgroundService;
 import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebIntentService;
 import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebService;
-import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Store;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.StoreDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Transaction;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionDao;
@@ -180,7 +178,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     public void onViewReady() {
         viewReady = true;
 
-        Store store = new Store();
+        /*Store store = new Store();
         store.setDevice_id("26:00:ba:16:08:59");
         store.setMac_address("26:00:ba:16:08:59");
         store.setIs_active(1);
@@ -188,7 +186,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         store.setCreated_at(new Date());
         store.setUpdated_at(new Date());
 
-        storeDao.insert(store);
+        storeDao.insert(store);*/
 
     }
 
