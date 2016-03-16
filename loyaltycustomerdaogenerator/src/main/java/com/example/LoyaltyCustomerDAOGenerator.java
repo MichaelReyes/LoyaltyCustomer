@@ -59,19 +59,19 @@ public class LoyaltyCustomerDAOGenerator {
         reward.addDateProperty("created_at");
         reward.addDateProperty("updated_at");
 
-        Entity store = schema.addEntity("Store");
+        /*Entity store = schema.addEntity("Store");
         store.addIdProperty();
         store.addStringProperty("device_id");
-        store.addStringProperty("name");
+        store.addStringProperty("name");*/
 
-        /*Entity store = schema.addEntity("Store");
+        Entity store = schema.addEntity("Store");
         store.addIdProperty().autoincrement();
         store.addStringProperty("device_id");
         store.addStringProperty("mac_address");
         store.addStringProperty("name");
         store.addIntProperty("is_active");
         store.addDateProperty("created_at");
-        store.addDateProperty("updated_at");*/
+        store.addDateProperty("updated_at");
 
         Entity transactionHasReward = schema.addEntity("TransactionHasReward");
         transactionHasReward.addIdProperty().autoincrement();

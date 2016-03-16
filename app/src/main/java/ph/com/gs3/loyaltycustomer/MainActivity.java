@@ -2,8 +2,10 @@ package ph.com.gs3.loyaltycustomer;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Point;
 import android.net.wifi.WifiManager;
@@ -33,12 +35,17 @@ import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.services.DiscoverPeersOnBackgroundService;
 import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebIntentService;
 import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebService;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Reward;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.RewardDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.StoreDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Transaction;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionDao;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionHasReward;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionHasRewardDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionProduct;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionProductDao;
 import ph.com.gs3.loyaltycustomer.models.tasks.AcquirePurchaseInfoTask;
+import ph.com.gs3.loyaltycustomer.models.tasks.AcquireTransactionsTask;
 import ph.com.gs3.loyaltycustomer.models.values.Announcement;
 import ph.com.gs3.loyaltycustomer.presenters.WifiDirectConnectivityDataPresenter;
 
@@ -46,7 +53,8 @@ import ph.com.gs3.loyaltycustomer.presenters.WifiDirectConnectivityDataPresenter
 public class MainActivity extends Activity implements MainViewFragment.MainViewFragmentEventListener,
         WifiDirectConnectivityDataPresenter.WifiDirectConnectivityPresentationListener,
         AcquirePurchaseInfoTask.AcquirePurchaseInfoListener,
-        Animation.AnimationListener{
+        AcquireTransactionsTask.AcquireTransactionsTaskListener,
+        Animation.AnimationListener {
 
     public static final String TAG = MainActivity.class.getSimpleName();
     public static final String DATA_TYPE_JSON_SALES = "sales";
@@ -73,6 +81,8 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
     private StoreDao storeDao;
 
+    private String acquiredSalesTransactionNumber;
+
     private static final SimpleDateFormat formatter = new SimpleDateFormat(
             "EEE MMM d HH:mm:ss zzz yyyy");
 
@@ -83,7 +93,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         currentCustomer = Customer.getDeviceRetailerFromSharedPreferences(this);
         announcement = Announcement.getAnnouncementFromSharedPreference(this);
 
-        if ( announcement.getCurrentAnnouncement().equals("") ) {
+        if (announcement.getCurrentAnnouncement().equals("")) {
             announcement.setCurrentAnnouncement("Welcome to Don Benito's Cassava Cake and Pichi-pichi.");
         }
 
@@ -125,7 +135,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
             Log.d(TAG, "DiscoverPeersOnBackgroundService SERVICE ALREADY RUNNING!");
         }
 
-        if ( !isServiceRunning(DownloadUpdatesFromWebService.class) ) {
+        if (!isServiceRunning(DownloadUpdatesFromWebService.class)) {
             this.startService(downloadUpdatesFromWebServiceIntent);
 
         } else {
@@ -156,7 +166,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         super.onResume();
         wifiDirectConnectivityDataPresenter.onResume();
 
-        Log.d(TAG,"CUSTOMER INFO : " + currentCustomer.toString());
+        Log.d(TAG, "CUSTOMER INFO : " + currentCustomer.toString());
 
         /*if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
@@ -262,7 +272,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     public void onAnimationEnd(Animation animation) {
 
 
-        if ( announcementCount < splittedAnnouncement.length ) {
+        if (announcementCount < splittedAnnouncement.length) {
             tvAnnouncements.setText(splittedAnnouncement[announcementCount]);
         } else {
             tvAnnouncements.setText(splittedAnnouncement[0]);
@@ -271,7 +281,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
         Announcement checkAnnouncement = Announcement.getAnnouncementFromSharedPreference(this);
 
-        if ( !checkAnnouncement.getCurrentAnnouncement().equals(announcement.getCurrentAnnouncement()) ) {
+        if (!checkAnnouncement.getCurrentAnnouncement().equals(announcement.getCurrentAnnouncement())) {
             announcement.setCurrentAnnouncement(checkAnnouncement.getCurrentAnnouncement());
             splittedAnnouncement = announcement.getCurrentAnnouncement().split(";");
             tvAnnouncements.setText(splittedAnnouncement[0]);
@@ -323,7 +333,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onViewPromo() {
 
-        Intent intent= new Intent(this,RewardsActivity.class);
+        Intent intent = new Intent(this, RewardsActivity.class);
         startActivity(intent);
     }
 
@@ -360,58 +370,61 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onInfoAcquired(String jsonStringPurchaseInfo) {
 
+        if (jsonStringPurchaseInfo != null) {
 
-        if (!jsonStringPurchaseInfo.equals("")) {
-            TransactionDao transactionDao =
-                    LoyaltyCustomerApplication.getInstance().getSession().getTransactionDao();
-            TransactionProductDao transactionProductDao =
-                    LoyaltyCustomerApplication.getInstance().getSession().getTransactionProductDao();
 
-            try {
-                JSONObject jsonObject = new JSONObject(jsonStringPurchaseInfo);
+            if (!jsonStringPurchaseInfo.equals("")) {
+                TransactionDao transactionDao =
+                        LoyaltyCustomerApplication.getInstance().getSession().getTransactionDao();
+                TransactionProductDao transactionProductDao =
+                        LoyaltyCustomerApplication.getInstance().getSession().getTransactionProductDao();
 
-                JSONArray transactionProductsJsonArray = jsonObject.getJSONArray(DATA_TYPE_JSON_SALES_PRODUCT);
-                JSONObject transactionJsonObject = jsonObject.getJSONObject(DATA_TYPE_JSON_SALES);
+                try {
+                    JSONObject jsonObject = new JSONObject(jsonStringPurchaseInfo);
 
-                JSONObject transactionProductJsonObject;
+                    JSONArray transactionProductsJsonArray = jsonObject.getJSONArray(DATA_TYPE_JSON_SALES_PRODUCT);
+                    JSONObject transactionJsonObject = jsonObject.getJSONObject(DATA_TYPE_JSON_SALES);
 
-                for (int i = 0; i < transactionProductsJsonArray.length(); i++) {
+                    JSONObject transactionProductJsonObject;
 
-                    transactionProductJsonObject = transactionProductsJsonArray.getJSONObject(i);
+                    for (int i = 0; i < transactionProductsJsonArray.length(); i++) {
 
-                    TransactionProduct transactionProduct = new TransactionProduct();
-                    transactionProduct.setSales_transaction_number(transactionProductJsonObject.getString("sales_transaction_number"));
-                    transactionProduct.setProduct_id(transactionProductJsonObject.getLong("product_id"));
-                    transactionProduct.setProduct_name(transactionProductJsonObject.getString("product_name"));
-                    transactionProduct.setUnit_cost(Float.valueOf(transactionProductJsonObject.get("unit_cost").toString()));
-                    transactionProduct.setQuantity(transactionProductJsonObject.getInt("quantity"));
-                    transactionProduct.setSku(transactionProductJsonObject.getString("sku"));
-                    transactionProduct.setSub_total(Float.valueOf(transactionProductJsonObject.get("sub_total").toString()));
-                    transactionProduct.setSale_type(transactionProductJsonObject.getString("sale_type"));
+                        transactionProductJsonObject = transactionProductsJsonArray.getJSONObject(i);
 
-                    transactionProductDao.insert(transactionProduct);
+                        TransactionProduct transactionProduct = new TransactionProduct();
+                        transactionProduct.setSales_transaction_number(transactionProductJsonObject.getString("sales_transaction_number"));
+                        transactionProduct.setProduct_id(transactionProductJsonObject.getLong("product_id"));
+                        transactionProduct.setProduct_name(transactionProductJsonObject.getString("product_name"));
+                        transactionProduct.setUnit_cost(Float.valueOf(transactionProductJsonObject.get("unit_cost").toString()));
+                        transactionProduct.setQuantity(transactionProductJsonObject.getInt("quantity"));
+                        transactionProduct.setSku(transactionProductJsonObject.getString("sku"));
+                        transactionProduct.setSub_total(Float.valueOf(transactionProductJsonObject.get("sub_total").toString()));
+                        transactionProduct.setSale_type(transactionProductJsonObject.getString("sale_type"));
 
+                        transactionProductDao.insert(transactionProduct);
+
+                    }
+
+
+                    Transaction transaction = new Transaction();
+                    transaction.setTransaction_number(transactionJsonObject.getString("transaction_number"));
+                    transaction.setStore_id(transactionJsonObject.getLong("store_id"));
+                    transaction.setStore_name(transactionJsonObject.getString("store_name"));
+                    transaction.setAmount(Float.valueOf(transactionJsonObject.get("amount").toString()));
+                    transaction.setTransaction_date(
+                            formatter.parse(transactionJsonObject.get("transaction_date").toString())
+                    );
+
+                    transactionDao.insert(transaction);
+
+                } catch (JSONException | ParseException e) {
+                    e.printStackTrace();
                 }
 
-
-                Transaction transaction = new Transaction();
-                transaction.setTransaction_number(transactionJsonObject.getString("transaction_number"));
-                transaction.setStore_id(transactionJsonObject.getLong("store_id"));
-                transaction.setStore_name(transactionJsonObject.getString("store_name"));
-                transaction.setAmount(Float.valueOf(transactionJsonObject.get("amount").toString()));
-                transaction.setTransaction_date(
-                        formatter.parse(transactionJsonObject.get("transaction_date").toString())
-                );
-
-                transactionDao.insert(transaction);
-
-            } catch (JSONException | ParseException e) {
-                e.printStackTrace();
             }
-
         }
 
-        if ( !WifiDirectConnectivityState.getInstance().isServer() ) {
+        if (!WifiDirectConnectivityState.getInstance().isServer()) {
 
             wifiDirectConnectivityDataPresenter.disconnect(new WifiP2pManager.ActionListener() {
                 @Override
@@ -428,5 +441,193 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
     }
 
+
+    @Override
+    public void onCustomerIdSent() {
+        Log.d(TAG, "Customer Id Sent");
+    }
+
+    @Override
+    public void onTransactionRecordCountSent() {
+        Log.d(TAG, "Transaction Record Count Sent");
+    }
+
+    @Override
+    public void onSalesRecieved(List<Transaction> transactions) {
+
+        for (int i = 0; i < transactions.size(); i++) {
+
+            Transaction transaction = transactions.get(i);
+            acquiredSalesTransactionNumber = transaction.getTransaction_number();
+
+            Log.d(TAG, "========== TRANSACTION START ==========");
+
+            Log.d(TAG, "Transaction Date : " + transaction.getTransaction_date());
+            Log.d(TAG, "Store Name : " + transaction.getStore_name());
+            Log.d(TAG, "Transaction Number : " + transaction.getTransaction_number());
+            Log.d(TAG, "Amount : " + transaction.getAmount());
+
+            Log.d(TAG, "========== TRANSACTION END ==========");
+
+            TransactionProductDao transactionProductDao =
+                    LoyaltyCustomerApplication
+                            .getSession().getTransactionProductDao();
+
+            List<TransactionProduct> transactionProducts =
+                    transactionProductDao
+                            .queryBuilder()
+                            .where(
+                                    TransactionProductDao.Properties.Sales_transaction_number.eq(
+                                            transaction.getTransaction_number()
+                                    )
+                            ).list();
+
+            Log.d(TAG, "========== TRANSACTION PRODUCT START ==========");
+
+            for (TransactionProduct transactionProduct : transactionProducts) {
+
+                Log.d(TAG, "-----------------------------------------");
+
+                Log.d(TAG, "Transaction Number : " + transactionProduct.getSales_transaction_number());
+                Log.d(TAG, "Product Name : " + transactionProduct.getProduct_name());
+                Log.d(TAG, "Product Unit Cost : " + transactionProduct.getUnit_cost());
+                Log.d(TAG, "Sub Total : " + transactionProduct.getSub_total());
+
+                Log.d(TAG, "-----------------------------------------");
+
+            }
+
+            Log.d(TAG, "========== TRANSACTION PRODUCT END ==========");
+
+            TransactionHasRewardDao transactionHasRewardDao =
+                    LoyaltyCustomerApplication.getSession().getTransactionHasRewardDao();
+
+            List<TransactionHasReward> transactionHasRewardList =
+                    transactionHasRewardDao
+                            .queryBuilder()
+                            .where(
+                                    TransactionHasRewardDao.Properties.Sales_transaction_number.eq(
+                                            transaction.getTransaction_number()
+                                    )
+                            ).list();
+
+            Log.d(TAG, "========== TRANSACTION HAS REWARD START ==========");
+
+            for (TransactionHasReward transactionHasReward : transactionHasRewardList) {
+
+                Log.d(TAG, "-----------------------------------------");
+
+                Log.d(TAG, "Transaction Number : " + transactionHasReward.getSales_transaction_number());
+                Log.d(TAG, "Reward Id : " + transactionHasReward.getReward_id());
+
+                Log.d(TAG, "-----------------------------------------");
+
+            }
+
+            Log.d(TAG, "========== TRANSACTION HAS REWARD END ==========");
+
+        }
+
+
+    }
+
+    @Override
+    public void onRewardsRecieved(List<Reward> rewards) {
+
+        Log.d(TAG, "========== REWARDS START ==========");
+
+        for (Reward reward : rewards) {
+
+
+            Log.d(TAG, "Reward : " + reward.getReward());
+
+        }
+
+        Log.d(TAG, "========== REWARDS END ==========");
+
+        onTransactionRecieved();
+
+    }
+
+    private void onTransactionRecieved() {
+
+        if (!WifiDirectConnectivityState.getInstance().isServer()) {
+
+            wifiDirectConnectivityDataPresenter.disconnect(new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Log.d(TAG, "Disconnected.");
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    Log.d(TAG, "Failed to disconnect.");
+                }
+            });
+        }
+
+        if (!wifiManager.isWifiEnabled()) {
+            wifiManager.setWifiEnabled(true);
+        } else {
+            wifiManager.setWifiEnabled(false);
+            wifiManager.setWifiEnabled(true);
+        }
+
+        TransactionHasRewardDao transactionHasRewardDao =
+                LoyaltyCustomerApplication.getSession().getTransactionHasRewardDao();
+        RewardDao rewardDao =
+                LoyaltyCustomerApplication.getSession().getRewardDao();
+
+        List<TransactionHasReward> transactionHasRewardList =
+                transactionHasRewardDao
+                        .queryBuilder()
+                        .where(
+                                TransactionHasRewardDao.Properties.Sales_transaction_number.eq(
+                                        acquiredSalesTransactionNumber
+                                )
+                        ).list();
+
+        if (transactionHasRewardList.size() > 0) {
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("REWARDS \n");
+
+            for (TransactionHasReward transactionHasReward : transactionHasRewardList) {
+
+                String message = "";
+
+                List<Reward> rewards =
+                        rewardDao
+                                .queryBuilder()
+                                .where(
+                                        RewardDao.Properties.Id.eq(transactionHasReward.getReward_id())
+                                ).list();
+
+                for(Reward reward : rewards){
+
+                    message += "_______________________ \n";
+
+                    message += reward.getReward() + "\n";
+
+                    message += "_______________________ \n";
+                }
+
+                builder.setMessage(message);
+
+                builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
+
+            }
+
+        }
+
+
+    }
 
 }

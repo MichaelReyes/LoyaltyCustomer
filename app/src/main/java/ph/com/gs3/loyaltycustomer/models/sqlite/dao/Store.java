@@ -8,7 +8,11 @@ public class Store {
 
     private Long id;
     private String device_id;
+    private String mac_address;
     private String name;
+    private Integer is_active;
+    private java.util.Date created_at;
+    private java.util.Date updated_at;
 
     public Store() {
     }
@@ -17,10 +21,14 @@ public class Store {
         this.id = id;
     }
 
-    public Store(Long id, String device_id, String name) {
+    public Store(Long id, String device_id, String mac_address, String name, Integer is_active, java.util.Date created_at, java.util.Date updated_at) {
         this.id = id;
         this.device_id = device_id;
+        this.mac_address = mac_address;
         this.name = name;
+        this.is_active = is_active;
+        this.created_at = created_at;
+        this.updated_at = updated_at;
     }
 
     public Long getId() {
@@ -39,12 +47,44 @@ public class Store {
         this.device_id = device_id;
     }
 
+    public String getMac_address() {
+        return mac_address;
+    }
+
+    public void setMac_address(String mac_address) {
+        this.mac_address = mac_address;
+    }
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Integer getIs_active() {
+        return is_active;
+    }
+
+    public void setIs_active(Integer is_active) {
+        this.is_active = is_active;
+    }
+
+    public java.util.Date getCreated_at() {
+        return created_at;
+    }
+
+    public void setCreated_at(java.util.Date created_at) {
+        this.created_at = created_at;
+    }
+
+    public java.util.Date getUpdated_at() {
+        return updated_at;
+    }
+
+    public void setUpdated_at(java.util.Date updated_at) {
+        this.updated_at = updated_at;
     }
 
 }

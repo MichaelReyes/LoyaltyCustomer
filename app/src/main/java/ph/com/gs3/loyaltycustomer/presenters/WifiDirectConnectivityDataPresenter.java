@@ -16,8 +16,7 @@ import java.util.List;
 import ph.com.gs3.loyaltycustomer.models.DeviceInfo;
 import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.recievers.WifiDirectBroadcastReceiver;
-import ph.com.gs3.loyaltycustomer.models.tasks.AcquirePurchaseInfoTask;
-import ph.com.gs3.loyaltycustomer.models.tasks.AquireDataTask;
+import ph.com.gs3.loyaltycustomer.models.tasks.AcquireTransactionsTask;
 
 /**
  * Responsibilities in relation to wifi direct/P2P connectivity is delegated here
@@ -92,9 +91,18 @@ public class WifiDirectConnectivityDataPresenter implements
         Log.v(TAG, "Connected to a device");
 
 
-        AquireDataTask aquireDataTask = new AquireDataTask(3001, context);
+        /*AquireDataTask aquireDataTask = new AquireDataTask(3001, context);
         aquireDataTask.setAcquirePurchaseInfoListener((AcquirePurchaseInfoTask.AcquirePurchaseInfoListener) sourceActivity);
-        aquireDataTask.execute();
+        aquireDataTask.execute();*/
+
+        AcquireTransactionsTask acquireTransactionsTask =
+                new AcquireTransactionsTask(
+                    3001,
+                    context,
+                    (AcquireTransactionsTask.AcquireTransactionsTaskListener) sourceActivity
+                );
+
+        acquireTransactionsTask.execute();
 
         Log.d(TAG, "Connection established");
         wifiDirectConnectivityPresentationListener.onConnectionEstablished();
