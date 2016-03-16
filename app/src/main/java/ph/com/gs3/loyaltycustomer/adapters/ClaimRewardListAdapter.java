@@ -32,6 +32,7 @@ public class ClaimRewardListAdapter extends BaseAdapter {
     @Override
     public int getCount() {
         return rewardList.size();
+        
     }
 
     @Override
