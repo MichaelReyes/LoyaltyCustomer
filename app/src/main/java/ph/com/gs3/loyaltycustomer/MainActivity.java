@@ -3,6 +3,7 @@ package ph.com.gs3.loyaltycustomer;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -15,9 +16,13 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Display;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.AdapterView;
+import android.widget.CheckedTextView;
 import android.widget.HorizontalScrollView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,16 +32,17 @@ import org.json.JSONObject;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 
+import ph.com.gs3.loyaltycustomer.adapters.ClaimRewardListAdapter;
 import ph.com.gs3.loyaltycustomer.fragments.MainViewFragment;
 import ph.com.gs3.loyaltycustomer.models.Customer;
 import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.services.DiscoverPeersOnBackgroundService;
 import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebIntentService;
-import ph.com.gs3.loyaltycustomer.models.services.DownloadUpdatesFromWebService;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Reward;
-import ph.com.gs3.loyaltycustomer.models.sqlite.dao.RewardDao;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Store;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.StoreDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Transaction;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionDao;
@@ -46,6 +52,7 @@ import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionProduct;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionProductDao;
 import ph.com.gs3.loyaltycustomer.models.tasks.AcquirePurchaseInfoTask;
 import ph.com.gs3.loyaltycustomer.models.tasks.AcquireTransactionsTask;
+import ph.com.gs3.loyaltycustomer.models.tasks.SendClaimedRewardsTask;
 import ph.com.gs3.loyaltycustomer.models.values.Announcement;
 import ph.com.gs3.loyaltycustomer.presenters.WifiDirectConnectivityDataPresenter;
 
@@ -54,11 +61,20 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         WifiDirectConnectivityDataPresenter.WifiDirectConnectivityPresentationListener,
         AcquirePurchaseInfoTask.AcquirePurchaseInfoListener,
         AcquireTransactionsTask.AcquireTransactionsTaskListener,
+        SendClaimedRewardsTask.SendClaimedRewardTaskListener,
         Animation.AnimationListener {
 
     public static final String TAG = MainActivity.class.getSimpleName();
     public static final String DATA_TYPE_JSON_SALES = "sales";
     public static final String DATA_TYPE_JSON_SALES_PRODUCT = "sales_product";
+
+    private enum ActionType {
+        RECIEVE_TRANSACTION, SEND_CLAIMED_REWARDS
+    }
+
+    private List<WifiP2pDevice> retailerDeviceList = new ArrayList<>();
+
+    private ActionType actionType = ActionType.RECIEVE_TRANSACTION;
 
     private Customer currentCustomer;
 
@@ -82,6 +98,9 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     private StoreDao storeDao;
 
     private String acquiredSalesTransactionNumber;
+
+    private List<TransactionHasReward> claimedRewardList = new ArrayList<>();
+    private ClaimRewardListAdapter claimRewardListAdapter;
 
     private static final SimpleDateFormat formatter = new SimpleDateFormat(
             "EEE MMM d HH:mm:ss zzz yyyy");
@@ -135,11 +154,11 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
             Log.d(TAG, "DiscoverPeersOnBackgroundService SERVICE ALREADY RUNNING!");
         }
 
-        if (!isServiceRunning(DownloadUpdatesFromWebService.class)) {
+        if (!isServiceRunning(DownloadUpdatesFromWebIntentService.class)) {
             this.startService(downloadUpdatesFromWebServiceIntent);
 
         } else {
-            Log.d(TAG, "DownloadUpdatesFromWebService SERVICE ALREADY RUNNING!");
+            Log.d(TAG, "DownloadUpdatesFromWebIntentService SERVICE ALREADY RUNNING!");
         }
 
     }
@@ -204,13 +223,7 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onRefreshPresence() {
 
-        if (!wifiManager.isWifiEnabled()) {
-            wifiManager.setWifiEnabled(true);
-        } else {
-            wifiManager.setWifiEnabled(false);
-            wifiManager.setWifiEnabled(true);
-        }
-
+        resetWifi();
         onResetWifi();
 
         wifiDirectConnectivityDataPresenter.discoverPeers();
@@ -218,6 +231,16 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         Log.d(TAG, "WIFI ON ? " + wifiManager.isWifiEnabled());
 
     }
+
+    private void resetWifi() {
+        if (!wifiManager.isWifiEnabled()) {
+            wifiManager.setWifiEnabled(true);
+        } else {
+            wifiManager.setWifiEnabled(false);
+            wifiManager.setWifiEnabled(true);
+        }
+    }
+
 
     private void onResetWifi() {
 
@@ -228,8 +251,6 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
         progressDialog.show();
 
         hideDialogAfter(7000);
-
-        wifiDirectConnectivityDataPresenter.discoverPeers();
 
     }
 
@@ -345,6 +366,26 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onConnectionEstablished() {
         Toast.makeText(MainActivity.this, "Connection established", Toast.LENGTH_SHORT).show();
+
+        if (actionType.equals(ActionType.RECIEVE_TRANSACTION)) {
+            AcquireTransactionsTask acquireTransactionsTask =
+                    new AcquireTransactionsTask(
+                            3001, this, this
+                    );
+
+            acquireTransactionsTask.execute();
+
+        } else if (actionType.equals(ActionType.SEND_CLAIMED_REWARDS)) {
+            SendClaimedRewardsTask sendClaimedRewardsTask =
+                    new SendClaimedRewardsTask(
+                            3001,claimedRewardList,this
+                    );
+
+            sendClaimedRewardsTask.execute();
+            actionType = ActionType.RECIEVE_TRANSACTION;
+        }
+
+
     }
 
     @Override
@@ -355,6 +396,19 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
     @Override
     public void onNewPeersDiscovered(List<WifiP2pDevice> wifiP2pDevices) {
 
+        this.retailerDeviceList.clear();
+        this.retailerDeviceList.addAll(wifiP2pDevices);
+
+        Log.d(TAG, "========== READABLE DEVICES ==========");
+
+        for(WifiP2pDevice wifiP2pDevice : retailerDeviceList){
+
+            Log.d(TAG, "NAME : " + wifiP2pDevice.deviceName);
+            Log.d(TAG, "ADDRESS : " + wifiP2pDevice.deviceAddress);
+
+        }
+
+        Log.d(TAG, "======================================");
 
     }
 
@@ -545,12 +599,144 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
 
         Log.d(TAG, "========== REWARDS END ==========");
 
-        onTransactionRecieved();
+        onTransactionDone();
 
     }
 
-    private void onTransactionRecieved() {
+    private void onTransactionDone() {
 
+        disconnectPeers();
+
+        showClaimableRewards();
+
+    }
+
+    private void showClaimableRewards() {
+
+        Log.d(TAG, "showClaimableRewards ~ " + acquiredSalesTransactionNumber);
+
+        TransactionHasRewardDao transactionHasRewardDao =
+                LoyaltyCustomerApplication.getSession().getTransactionHasRewardDao();
+
+        List<TransactionHasReward> transactionHasRewardList =
+                transactionHasRewardDao
+                        .queryBuilder()
+                        .where(
+                                TransactionHasRewardDao.Properties.Sales_transaction_number.eq(
+                                        acquiredSalesTransactionNumber
+                                )
+                        ).list();
+
+        claimRewardListAdapter = new ClaimRewardListAdapter(this, transactionHasRewardList);
+
+        Log.d(TAG, " transactionHasRewardList COUNT : " + transactionHasRewardList.size());
+
+        if (transactionHasRewardList.size() > 0) {
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Claim Rewards");
+
+
+            ListView lvRewards = new ListView(this);
+            lvRewards.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
+            lvRewards.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    CheckedTextView checkedTextView = (CheckedTextView) view.findViewById(R.id.VCR_ctvReward);
+
+                     TransactionHasReward transactionHasReward =
+                            (TransactionHasReward) claimRewardListAdapter.getItem(position);
+
+                    if(checkedTextView.isChecked()){
+                        checkedTextView.setChecked(false);
+                        Log.d(TAG, "REMOVE");
+                        claimedRewardList.remove(transactionHasReward);
+                        Log.d(TAG, "SIZE : " + claimedRewardList.size());
+                    }else{
+                        checkedTextView.setChecked(true);
+                        Log.d(TAG, "ADD");
+                        claimedRewardList.add(transactionHasReward);
+                        Log.d(TAG, "SIZE : " + claimedRewardList.size());
+                    }
+
+                }
+            });
+
+            claimRewardListAdapter.notifyDataSetChanged();
+            lvRewards.setAdapter(claimRewardListAdapter);
+            builder.setView(lvRewards);
+
+            builder.setPositiveButton("CLAIM", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                    Log.d(TAG, "CLAIMED REWARDS SIZE : " + claimedRewardList.size());
+
+                    if (claimedRewardList.size() > 0) {
+
+                        TransactionDao transactionDao =
+                                LoyaltyCustomerApplication.getSession().getTransactionDao();
+
+                        List<Transaction> transactions =
+                                transactionDao
+                                        .queryBuilder()
+                                        .where(
+                                                TransactionDao.Properties.Transaction_number.eq(
+                                                        claimedRewardList.get(0).getSales_transaction_number()
+                                                )
+                                        ).list();
+
+
+                        for (Transaction transaction : transactions) {
+
+                            List<Store> storeList =
+                                    storeDao
+                                            .queryBuilder()
+                                            .where(
+                                                    StoreDao.Properties.Id.eq(
+                                                            transaction.getStore_id()
+                                                    )
+                                            ).list();
+
+                            for (Store store : storeList) {
+                                for (WifiP2pDevice retailerDevice : retailerDeviceList) {
+
+                                    if(retailerDevice.deviceAddress.trim().equals(store.getMac_address().trim())){
+                                        actionType = ActionType.SEND_CLAIMED_REWARDS;
+                                        wifiDirectConnectivityDataPresenter.connectToRetailer(retailerDevice,3001);
+                                    }
+
+                                }
+                            }
+
+
+                        }
+
+                    } else {
+                        dialog.dismiss();
+                    }
+
+
+                }
+            });
+
+            builder.setNegativeButton("CLOSE", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    claimedRewardList.clear();
+                    dialog.dismiss();
+                }
+            });
+
+            Dialog dialog = builder.create();
+            dialog.show();
+
+        }
+    }
+
+    private void disconnectPeers() {
         if (!WifiDirectConnectivityState.getInstance().isServer()) {
 
             wifiDirectConnectivityDataPresenter.disconnect(new WifiP2pManager.ActionListener() {
@@ -566,68 +752,12 @@ public class MainActivity extends Activity implements MainViewFragment.MainViewF
             });
         }
 
-        if (!wifiManager.isWifiEnabled()) {
-            wifiManager.setWifiEnabled(true);
-        } else {
-            wifiManager.setWifiEnabled(false);
-            wifiManager.setWifiEnabled(true);
-        }
-
-        TransactionHasRewardDao transactionHasRewardDao =
-                LoyaltyCustomerApplication.getSession().getTransactionHasRewardDao();
-        RewardDao rewardDao =
-                LoyaltyCustomerApplication.getSession().getRewardDao();
-
-        List<TransactionHasReward> transactionHasRewardList =
-                transactionHasRewardDao
-                        .queryBuilder()
-                        .where(
-                                TransactionHasRewardDao.Properties.Sales_transaction_number.eq(
-                                        acquiredSalesTransactionNumber
-                                )
-                        ).list();
-
-        if (transactionHasRewardList.size() > 0) {
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("REWARDS \n");
-
-            for (TransactionHasReward transactionHasReward : transactionHasRewardList) {
-
-                String message = "";
-
-                List<Reward> rewards =
-                        rewardDao
-                                .queryBuilder()
-                                .where(
-                                        RewardDao.Properties.Id.eq(transactionHasReward.getReward_id())
-                                ).list();
-
-                for(Reward reward : rewards){
-
-                    message += "_______________________ \n";
-
-                    message += reward.getReward() + "\n";
-
-                    message += "_______________________ \n";
-                }
-
-                builder.setMessage(message);
-
-                builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-
-                builder.show();
-
-            }
-
-        }
-
-
+        //resetWifi();
     }
 
+    @Override
+    public void onClaimedRewardsSent() {
+        disconnectPeers();
+        resetWifi();
+    }
 }

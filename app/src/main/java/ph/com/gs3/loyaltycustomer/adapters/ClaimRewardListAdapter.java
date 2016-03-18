@@ -5,14 +5,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.CheckedTextView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+import ph.com.gs3.loyaltycustomer.LoyaltyCustomerApplication;
 import ph.com.gs3.loyaltycustomer.R;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Reward;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.RewardDao;
+import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionHasReward;
 
 /**
  * Created by Bryan-PC on 16/03/2016.
@@ -20,24 +24,24 @@ import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Reward;
 public class ClaimRewardListAdapter extends BaseAdapter {
 
     private Context context;
-    private List<Reward> rewardList;
+    private List<TransactionHasReward> transactionHasRewardList;
     private static final SimpleDateFormat formatter = new SimpleDateFormat(
             "yyyy-MM-dd", Locale.ENGLISH);
 
-    public ClaimRewardListAdapter(Context context, List<Reward> rewardList) {
+    public ClaimRewardListAdapter(Context context, List<TransactionHasReward> transactionHasRewardList) {
         this.context = context;
-        this.rewardList = rewardList;
+        this.transactionHasRewardList = transactionHasRewardList;
     }
 
     @Override
     public int getCount() {
-        return rewardList.size();
-        
+        return transactionHasRewardList.size();
+
     }
 
     @Override
     public Object getItem(int position) {
-        return rewardList.get(position);
+        return transactionHasRewardList.get(position);
     }
 
     @Override
@@ -51,11 +55,11 @@ public class ClaimRewardListAdapter extends BaseAdapter {
         View row = convertView;
         RewardViewHolder viewHolder;
 
-        Reward reward = (Reward) getItem(position);
+        TransactionHasReward transactionHasReward = (TransactionHasReward) getItem(position);
 
         if (row == null) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            row = inflater.inflate(R.layout.view_rewards, parent, false);
+            row = inflater.inflate(R.layout.view_claim_rewards, parent, false);
 
             viewHolder = new RewardViewHolder(row);
             row.setTag(viewHolder);
@@ -63,23 +67,39 @@ public class ClaimRewardListAdapter extends BaseAdapter {
 
         viewHolder = (RewardViewHolder) row.getTag();
 
-        viewHolder.tvReward.setText(reward.getReward());
-        viewHolder.tvValidFrom.setText(formatter.format(reward.getValid_from()));
-        viewHolder.tvValidUntil.setText(formatter.format(reward.getValid_until()));
+        RewardDao rewardDao = LoyaltyCustomerApplication.getSession().getRewardDao();
+
+        List<Reward> rewardList =
+                rewardDao
+                        .queryBuilder()
+                        .where(
+                                RewardDao.Properties.Id.eq(
+                                        transactionHasReward.getReward_id()
+                                )
+                        ).list();
+
+        for(Reward reward : rewardList){
+
+            viewHolder.tvRewardId.setText(String.valueOf(reward.getId()));
+            viewHolder.tvSalesTransactionNumber.setText(transactionHasReward.getSales_transaction_number());
+            viewHolder.ctvReward.setText(reward.getReward());
+
+        }
 
         return row;
     }
 
     private static class RewardViewHolder {
 
-        final TextView tvReward;
-        final TextView tvValidFrom;
-        final TextView tvValidUntil;
+        final TextView tvRewardId;
+        final TextView tvSalesTransactionNumber;
+        final CheckedTextView ctvReward;
 
         public RewardViewHolder(View view) {
-            tvReward = (TextView) view.findViewById(R.id.VR_tvReward);
-            tvValidFrom = (TextView) view.findViewById(R.id.VR_tvValidFrom);
-            tvValidUntil= (TextView) view.findViewById(R.id.VR_tvValidUntil);
+
+            tvRewardId = (TextView) view.findViewById(R.id.VCR_tvRewardId);
+            tvSalesTransactionNumber = (TextView) view.findViewById(R.id.VCR_tvSalesTransactionNumber);
+            ctvReward = (CheckedTextView) view.findViewById(R.id.VCR_ctvReward);
         }
 
     }

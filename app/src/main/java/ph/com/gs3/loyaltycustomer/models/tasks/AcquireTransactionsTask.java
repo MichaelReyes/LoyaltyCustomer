@@ -1,8 +1,6 @@
 package ph.com.gs3.loyaltycustomer.models.tasks;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -23,7 +21,6 @@ import ph.com.gs3.loyaltycustomer.LoyaltyCustomerApplication;
 import ph.com.gs3.loyaltycustomer.models.Customer;
 import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Reward;
-import ph.com.gs3.loyaltycustomer.models.sqlite.dao.RewardDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Store;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.StoreDao;
 import ph.com.gs3.loyaltycustomer.models.sqlite.dao.Transaction;
@@ -36,12 +33,12 @@ import ph.com.gs3.loyaltycustomer.models.sqlite.dao.TransactionProductDao;
 /**
  * Created by Bryan-PC on 03/03/2016.
  */
-public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsTask.ProgressType,Void> {
+public class AcquireTransactionsTask extends AsyncTask<Void, AcquireTransactionsTask.ProgressType, Void> {
 
     public static final String TAG = AcquireTransactionsTask.class.getSimpleName();
 
     public enum ProgressType {
-       CUSTOMER_ID, TRANSACTION_RECORDS_COUNT, TRANSACTIONS, REWARDS, PRODUCTS, CLAIMED_REWARDS
+        CUSTOMER_ID, TRANSACTION_RECORDS_COUNT, TRANSACTIONS, REWARDS
     }
 
     private int port;
@@ -51,7 +48,7 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
 
     private Customer customer;
 
-    private List<Transaction> transactionsRecieved;
+    private List<Transaction> transactionsRecieved = new ArrayList<>();
     private List<Reward> rewardsRecieved = new ArrayList<>();
     private List<TransactionHasReward> transactionRewardsRecieved = new ArrayList<>();
 
@@ -61,9 +58,8 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
         this.acquireTransactionsTaskListener = acquireTransactionsTaskListener;
 
         customer = Customer.getDeviceRetailerFromSharedPreferences(context);
-        transactionsRecieved = new ArrayList<>();
-        rewardsRecieved = new ArrayList<>();
     }
+
 
     @Override
     protected Void doInBackground(Void... params) {
@@ -76,7 +72,11 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
         Socket socket;
         try {
             if (connectivityState.isServer()) {
-                serverSocket = new ServerSocket(port);
+                /*serverSocket = new ServerSocket(port);
+                serverSocket.setReuseAddress(true);*/
+                serverSocket = new ServerSocket(); // <-- create an unbound socket first
+                serverSocket.setReuseAddress(true);
+                serverSocket.bind(new InetSocketAddress(port)); // <-- now bind it
                 socket = serverSocket.accept();
             } else {
                 socket = new Socket();
@@ -96,12 +96,9 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
             publishProgress(ProgressType.TRANSACTION_RECORDS_COUNT);
             acquireSales(dataOutputStream, dataInputStream);
             publishProgress(ProgressType.TRANSACTIONS);
-            acquireRewards(dataInputStream);
+            acquireRewards(dataInputStream,dataOutputStream);
             publishProgress(ProgressType.REWARDS);
 
-            /*if(transactionRewardsRecieved.size() > 0){
-
-            }*/
 
             dataOutputStream.close();
             dataInputStream.close();
@@ -134,6 +131,7 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
 
     }
 
+
     private void awaitClientReadyConfirmation(DataInputStream dataInputStream) throws IOException {
 
         String clientReadyConfirmation = dataInputStream.readUTF();
@@ -156,7 +154,7 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
 
     }
 
-    private void sendTransactionRecordsCount(DataOutputStream dataOutputStream) throws  IOException{
+    private void sendTransactionRecordsCount(DataOutputStream dataOutputStream) throws IOException {
 
         dataOutputStream.writeUTF("CUSTOMER_TRANSACTION_RECORD_COUNT");
 
@@ -168,52 +166,8 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
 
     }
 
-    private void sendClaimedRewards(DataOutputStream dataOutputStream){
-
-        AlertDialog.Builder builderDialog = new AlertDialog.Builder(context);
-        builderDialog.setTitle("Claim Rewards");
-
-        List<String> rewards = new ArrayList<>();
-
-        RewardDao rewardDao = LoyaltyCustomerApplication.getSession().getRewardDao();
-
-        for(TransactionHasReward transactionHasReward : transactionRewardsRecieved){
-
-           List<Reward> rewardList =
-                   rewardDao
-                           .queryBuilder()
-                           .where(
-                                RewardDao.Properties.Id.eq(
-                                        transactionHasReward.getReward_id()
-                                )
-                           ).list();
-
-            for(Reward reward : rewardList){
-
-                rewards.add(reward.getReward());
-
-            }
-
-        }
-
-        CharSequence[] dialogList=  rewards.toArray(new CharSequence[rewards.size()]);
-        int count = transactionRewardsRecieved.size();
-        boolean[] isChecked = new boolean[count];
-
-        // Creating multiple selection by using setMutliChoiceItem method
-        builderDialog.setMultiChoiceItems(dialogList, isChecked,
-                new DialogInterface.OnMultiChoiceClickListener() {
-                    public void onClick(DialogInterface dialog,
-                                        int whichButton, boolean isChecked) {
-                    }
-                });
-
-
-
-    }
-
     private void acquireSales(DataOutputStream dataOutputStream, DataInputStream dataInputStream) throws IOException {
-        Gson gson=  new GsonBuilder().setDateFormat("EEE MMM d HH:mm:ss zzz yyyy").create();
+        Gson gson = new GsonBuilder().setDateFormat("EEE MMM d HH:mm:ss zzz yyyy").create();
 
         TransactionDao transactionDao = LoyaltyCustomerApplication.getSession().getTransactionDao();
         TransactionHasRewardDao transactionHasRewardDao = LoyaltyCustomerApplication.getSession().getTransactionHasRewardDao();
@@ -273,7 +227,7 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
                                 TransactionProduct[].class
                         );
 
-                for(TransactionProduct transactionProduct : transactionProducts){
+                for (TransactionProduct transactionProduct : transactionProducts) {
 
                     transactionProductDao.insert(cloneTransactionProduct(transactionProduct));
 
@@ -315,7 +269,7 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
 
     }
 
-    private void acquireRewards(DataInputStream dataInputStream) throws IOException {
+    private void acquireRewards(DataInputStream dataInputStream, DataOutputStream dataOutputStream) throws IOException {
         String preMessage = dataInputStream.readUTF();
 
         if ("REWARDS".equals(preMessage)) {
@@ -326,6 +280,8 @@ public class AcquireTransactionsTask extends AsyncTask<Void,AcquireTransactionsT
 
             Reward[] rewards = gson.fromJson(rewardsJsonString, Reward[].class);
             rewardsRecieved = Arrays.asList(rewards);
+
+            dataOutputStream.writeUTF("REWARDS_RECIEVED");
         }
     }
 

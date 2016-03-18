@@ -14,7 +14,7 @@ public class DeviceInfo implements Serializable {
     private Type type;
 
     public enum Type {
-        RETAILER, CUSTOMER
+        RETAILER, CUSTOMER, AGENT
     }
 
     public String serialize() throws JSONException {

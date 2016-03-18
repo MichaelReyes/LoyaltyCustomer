@@ -2,21 +2,25 @@ package ph.com.gs3.loyaltycustomer.presenters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.json.JSONException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 import ph.com.gs3.loyaltycustomer.models.DeviceInfo;
 import ph.com.gs3.loyaltycustomer.models.WifiDirectConnectivityState;
 import ph.com.gs3.loyaltycustomer.models.recievers.WifiDirectBroadcastReceiver;
-import ph.com.gs3.loyaltycustomer.models.tasks.AcquireTransactionsTask;
 
 /**
  * Responsibilities in relation to wifi direct/P2P connectivity is delegated here
@@ -24,6 +28,7 @@ import ph.com.gs3.loyaltycustomer.models.tasks.AcquireTransactionsTask;
  * Created by Ervinne Sodusta on 8/17/2015.
  */
 public class WifiDirectConnectivityDataPresenter implements
+        Observer,
         WifiDirectConnectivityState.WifiDirectPeerConnectivityStateListener {
 
     public static final String TAG = WifiDirectConnectivityDataPresenter.class.getSimpleName();
@@ -39,6 +44,7 @@ public class WifiDirectConnectivityDataPresenter implements
     private Activity sourceActivity;
     private Context context;
 
+    private WifiDirectConnectivityState lastConnectivityState;
 
     private boolean isPreviouslyConnected;
 
@@ -65,6 +71,8 @@ public class WifiDirectConnectivityDataPresenter implements
     public void onResume() {
 
         // register this as an observer of the wifi direct connectivity state
+        WifiDirectConnectivityState.getInstance().addObserver(this);
+
         WifiDirectConnectivityState.getInstance().addPeerConnectivityStateListener(this);
 
         // start listenting to wifi direct broadcasts
@@ -85,24 +93,54 @@ public class WifiDirectConnectivityDataPresenter implements
     }
 
     @Override
+    public void update(Observable observable, Object data) {
+
+        lastConnectivityState = (WifiDirectConnectivityState) observable;
+
+        Log.d(TAG, "CURRENT DEVICE ADDRESS : " + lastConnectivityState.getCurrentDeviceAddress());
+
+//        if (!connectivityState.isConnectedToDevice()) {
+//            connectivityState.reset();
+//        }
+
+        Log.d(TAG, "Detected change in the WifiDirectConnectivityState instance");
+
+        // always update the devices regardless of object update
+        // TODO: change this ^ implementation
+
+        // filter the devices
+        List<WifiP2pDevice> readableDevices = new ArrayList<>();
+        for (WifiP2pDevice device : lastConnectivityState.getDeviceList()) {
+
+            readableDevices.add(device);
+
+            /*try {
+                DeviceInfo deviceInfo = DeviceInfo.unserialize(device.deviceName);
+                Log.v(TAG, device.deviceName);
+                Log.v(TAG, deviceInfo.getType().toString());
+
+                // add here
+                readableDevices.add(device);
+
+            } catch (JSONException e) {
+                Log.i(TAG, "Device " + device.deviceName + " was ignored as it's name does not represent a valid device info this application uses");
+            }*/
+
+        }
+
+        wifiDirectConnectivityPresentationListener.onNewPeersDiscovered(readableDevices);
+
+    }
+
+    @Override
     public void onPeerDeviceConnectionEstablished() {
         isPreviouslyConnected = true;
         WifiDirectConnectivityState observableState = WifiDirectConnectivityState.getInstance();
         Log.v(TAG, "Connected to a device");
 
-
         /*AquireDataTask aquireDataTask = new AquireDataTask(3001, context);
         aquireDataTask.setAcquirePurchaseInfoListener((AcquirePurchaseInfoTask.AcquirePurchaseInfoListener) sourceActivity);
         aquireDataTask.execute();*/
-
-        AcquireTransactionsTask acquireTransactionsTask =
-                new AcquireTransactionsTask(
-                    3001,
-                    context,
-                    (AcquireTransactionsTask.AcquireTransactionsTaskListener) sourceActivity
-                );
-
-        acquireTransactionsTask.execute();
 
         Log.d(TAG, "Connection established");
         wifiDirectConnectivityPresentationListener.onConnectionEstablished();
@@ -201,6 +239,28 @@ public class WifiDirectConnectivityDataPresenter implements
             Log.v(TAG, message);
         }
     };
+
+    public void connectToRetailer(WifiP2pDevice retailerDevice, int servicePort) {
+
+        WifiP2pConfig config = new WifiP2pConfig();
+        config.deviceAddress = retailerDevice.deviceAddress;
+
+        Log.v(TAG, "Connecting to: " + retailerDevice.deviceAddress);
+
+        wifiP2pManager.connect(channel, config, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(context, "Connected.", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                wifiDirectConnectivityPresentationListener.onConnectionTerminated();
+                Toast.makeText(context, "Connect failed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
 
 
     public interface WifiDirectConnectivityPresentationListener {
